@@ -1,0 +1,61 @@
+### Aliases for urls used in BuildStream elements
+#
+#
+#Git source aliases
+chromium: https://chromium.googlesource.com/
+debian_salsa: https://salsa.debian.org/
+denx: https://source.denx.de/
+fedora_rpms: https://src.fedoraproject.org/rpms/
+ffmpeg: https://git.ffmpeg.org/
+freedesktop: https://gitlab.freedesktop.org/
+fdsdk_git: https://gitlab.com/freedesktop-sdk/
+fdsdk_mirror: https://gitlab.com/freedesktop-sdk/mirrors/
+gcc_gnu_org: https://gcc.gnu.org/git/
+ghostscript: https://git.ghostscript.com/
+github: https://github.com/
+gitlab: https://gitlab.com/
+gnome: https://gitlab.gnome.org/GNOME/
+gnupg: https://dev.gnupg.org/source/
+# The ~ here is intentional, as our mirrors can't have ~ in their name
+sourcehut: https://git.sr.ht/~
+kitware: https://gitlab.kitware.com/cmake/
+kernel: https://git.kernel.org/pub/scm/
+liburcu: https://git.liburcu.org/
+netfilter: https://git.netfilter.org/
+nettle: https://git.lysator.liu.se/nettle/
+pagure: https://pagure.io/
+passt: https://passt.top/
+pypi: https://files.pythonhosted.org/packages/
+samba: https://git.samba.org/
+savannah: https://git.savannah.gnu.org/git/
+sesse: https://git.sesse.net/
+sourceforge_git: https://git.code.sf.net/p/
+sourceware: https://sourceware.org/git/
+xiph: https://gitlab.xiph.org/xiph/
+videolan: https://code.videolan.org/videolan/
+git_videolan: https://git.videolan.org/
+
+#Generic aliases (because mirroring requires some sort of alias)
+git_https: https://
+# git_http: http://      #(Not currently used, uncomment if needed)
+#
+#
+#File Aliases (Single file sources, zip files, tar files, etc.)
+#(github_files is an alias for the same url as github, but doesn't use the same mirror)
+cpan: https://cpan.metacpan.org/
+ftp_gnu_org: https://ftpmirror.gnu.org/gnu/
+github_files: https://github.com/
+oasis_open_xml: https://www.oasis-open.org/docbook/xml/
+pagure_releases: https://releases.pagure.org/
+sourceforge_download: https://downloads.sourceforge.net/
+sourceforge: https://sourceforge.net/
+sourceware_pub: https://sourceware.org/pub/
+#Generic aliases (because mirroring requires some sort of alias)
+tar_https: https://
+#
+#
+#Cargo Alias
+crates: https://static.crates.io/
+
+# OCI registries
+fdsdk_registry: https://registry.gitlab.com/freedesktop-sdk/
