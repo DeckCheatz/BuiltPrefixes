@@ -1,0 +1,222 @@
+name: Build Wine Prefixes with Docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      vendor:
+        description: 'Proton vendor (only proton-ge supported)'
+        required: true
+        default: 'proton-ge'
+        type: choice
+        options:
+          - proton-ge
+      release_count:
+        description: 'Number of releases to build'
+        required: true
+        default: '2'
+        type: string
+
+  schedule:
+    # Run weekly on Sundays at 06:00 UTC
+    - cron: '0 6 * * 0'
+
+  push:
+    branches: [ main ]
+    paths:
+      - 'Dockerfile'
+      - 'docker-scripts/**'
+      - '.github/workflows/build-prefixes-docker.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/wine-prefix-builder
+
+jobs:
+  fetch-releases:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch Proton releases
+        id: fetch-releases
+        run: |
+          chmod +x scripts/fetch-proton-releases.sh
+          
+          VENDOR="${{ github.event.inputs.vendor || 'proton-ge' }}"
+          COUNT="${{ github.event.inputs.release_count || '2' }}"
+          
+          echo "Fetching releases with vendor: $VENDOR, count: $COUNT"
+          
+          # Create output directory
+          mkdir -p release-data
+          
+          # Fetch releases
+          ./scripts/fetch-proton-releases.sh "$VENDOR" urls "$COUNT" > release-data/releases.txt
+          
+          echo "Release data:"
+          cat release-data/releases.txt
+
+      - name: Generate build matrix
+        id: generate-matrix
+        run: |
+          # Convert release URLs to GitHub Actions matrix format
+          matrix_items=()
+          
+          while IFS='|' read -r vendor version url; do
+            if [[ -n "$vendor" && -n "$version" && -n "$url" ]]; then
+              matrix_items+=("{\"vendor\":\"$vendor\",\"version\":\"$version\",\"url\":\"$url\"}")
+            fi
+          done < release-data/releases.txt
+          
+          # Join matrix items
+          matrix_json="[$(IFS=','; echo "${matrix_items[*]}")]"
+          echo "Generated matrix: $matrix_json"
+          echo "matrix=$matrix_json" >> $GITHUB_OUTPUT
+
+  build-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-prefixes:
+    runs-on: ubuntu-latest
+    needs: [fetch-releases, build-image]
+    if: needs.fetch-releases.outputs.matrix != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.fetch-releases.outputs.matrix) }}
+    
+    container:
+      image: ${{ needs.build-image.outputs.image }}
+      options: --privileged
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create output directory
+        run: |
+          mkdir -p /output
+          chmod 777 /output
+
+      - name: Build Wine prefix
+        run: |
+          echo "Building Wine prefix for ${{ matrix.vendor }} ${{ matrix.version }}"
+          echo "Source URL: ${{ matrix.url }}"
+          
+          # Copy scripts to container
+          cp -r docker-scripts/* /scripts/
+          chmod +x /scripts/*.sh
+          
+          # Run the prefix builder
+          /scripts/build-prefix.sh "${{ matrix.url }}" /output
+        env:
+          DISPLAY: :99
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-prefix-${{ matrix.vendor }}-${{ matrix.version }}
+          path: /output/
+          retention-days: 30
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build-prefixes]
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          
+          # Collect all archives and metadata
+          find artifacts/ -name "*.tar.gz" -exec cp {} release-assets/ \;
+          find artifacts/ -name "*.zip" -exec cp {} release-assets/ \;
+          find artifacts/ -name "*.json" -exec cp {} release-assets/ \;
+          
+          # Create combined metadata
+          echo '{"prefixes":[' > release-assets/all-prefixes.json
+          find artifacts/ -name "*.json" -exec cat {} \; | sed 's/^/,/' | sed '1s/^,//' >> release-assets/all-prefixes.json
+          echo ']}' >> release-assets/all-prefixes.json
+          
+          echo "Release assets prepared:"
+          ls -la release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-assets/*
+          body: |
+            # Wine Prefixes Release ${{ github.ref_name }}
+            
+            This release contains pre-built Wine prefixes for various Proton versions.
+            
+            ## Usage
+            
+            1. Download the desired prefix archive (`.tar.gz` or `.zip`)
+            2. Extract the archive
+            3. Run `./scripts/install-prefix.sh` to install
+            4. Use `./run-app.sh /path/to/app.exe` to run applications
+            
+            ## Available Prefixes
+            
+            Check the `all-prefixes.json` file for complete metadata about all included prefixes.
+            
+            ## Build Information
+            
+            - Built with: Docker Wine Prefix Builder
+            - Build date: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
