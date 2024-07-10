@@ -1,0 +1,4 @@
+variables:
+  proton_ge_version: "GE-Proton9-20"
+  proton_ge_hash: "8c3599e26e5a5002e1b3f1211b0ac56bfddd6eb2c4dcbae7d81027182ed36c89"
+  proton_ge_url: "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton9-20/GE-Proton9-20.tar.gz"

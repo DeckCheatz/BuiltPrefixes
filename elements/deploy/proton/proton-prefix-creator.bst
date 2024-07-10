@@ -1,0 +1,48 @@
+# Create Wine prefix with all necessary components
+kind: manual
+
+# Dependencies
+build-depends:
+- filename: components/proton-ge-source.bst
+  config:
+    location: '/proton'
+- components/winetricks.bst  
+- components/xorg-server-xvfb.bst
+- freedesktop-sdk.bst:public-stacks/buildsystem-python.bst
+- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+
+# Build configuration
+config:
+  build-commands:
+    # Set up Wine environment from Proton-GE
+  - |
+    echo "Setting up Wine environment from Proton-GE..."
+    mkdir -p "%{prefix-root}"
+
+    # Initialize Wine prefix with Proton
+  - |
+    set -x
+    echo "Initializing Wine prefix with wineboot..."
+    
+    # Start Xvfb for headless Wine initialization
+    Xvfb "$DISPLAY" -screen 0 1024x768x24 &
+    XVFB_PID=$!
+    sleep 2
+
+    export PATH="$PATH:/proton:/proton/files/bin"
+    wine wineboot
+   
+    # Kill Xvfb
+    kill $XVFB_PID || true
+    
+    # Install dotnet48 via winetricks
+  - |
+    set -x
+    echo "Installing .NET Framework 4.8 via winetricks..."
+    export PATH="$PATH:/proton:/proton/files/bin"
+    
+    # Install dotnet48 (this may take a while)
+    winetricks -q dotnet48
+    
+    # Kill Xvfb
+    kill $XVFB_PID || true

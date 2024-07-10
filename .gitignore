@@ -1,0 +1,15 @@
+# Build artifacts and cache
+/.cache
+/output
+/artifacts
+/archives
+
+# Docker
+/result*
+
+# Development
+.DS_Store
+*.log
+
+/.bst
+/.bst2
