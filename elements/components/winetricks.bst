@@ -12,6 +12,8 @@ sources:
   path: patches/winetricks/0001-vkd3d-Hardcode-version.patch
 - kind: patch
   path: patches/winetricks/0002-vkd3d-Don-t-set-ownership.patch
+- kind: patch
+  path: patches/winetricks/0001-dxvk-Fix-extraction-under-sandboxing.patch
 
 config:
   install-commands:

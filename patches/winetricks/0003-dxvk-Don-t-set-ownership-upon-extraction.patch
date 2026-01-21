@@ -1,0 +1,28 @@
+From f355e9282af0e0a01c7143197da1f5debb0db224 Mon Sep 17 00:00:00 2001
+From: Dom Rodriguez <shymega@shymega.org.uk>
+Date: Wed, 21 Jan 2026 20:22:28 +0000
+Subject: [PATCH 3/3] dxvk: Don't set ownership upon extraction
+
+This fixes extraction under a sandbox.
+
+Signed-off-by: Dom Rodriguez <shymega@shymega.org.uk>
+---
+ src/winetricks | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/winetricks b/src/winetricks
+index 99eb469..b15a8cb 100644
+--- a/src/winetricks
++++ b/src/winetricks
+@@ -6918,7 +6918,7 @@ helper_dxvk()
+     if [ "${_W_package_archive##*.}" = "zip" ]; then
+         w_try_unzip "${W_TMP}" "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
+     else
+-        w_try tar -C "${W_TMP}" -zxf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
++        w_try tar -C "${W_TMP}" --no-same-owner --no-same-permissions -zxf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
+     fi
+ 
+     for _W_dll in ${_W_dll_overrides}; do
+-- 
+2.51.2
+
