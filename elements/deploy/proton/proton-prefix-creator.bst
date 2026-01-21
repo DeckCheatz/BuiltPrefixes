@@ -55,6 +55,3 @@ config:
     
     # Install dotnet48 (this may take a while)
     winetricks -q dotnet48
-    
-    # Kill Xvfb
-    kill $XVFB_PID || true
