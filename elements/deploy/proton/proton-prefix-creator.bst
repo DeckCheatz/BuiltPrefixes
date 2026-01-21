@@ -5,13 +5,25 @@ kind: manual
 build-depends:
 - filename: components/proton-ge-source.bst
   config:
-    location: '/proton'
-- filename: components/dotnet48.bst
+    location: "/proton"
+- filename: components/winetricks-dotnet48.bst
   config:
-    location: "/wine-assets/dotnet48"
-- filename: components/dotnet40.bst
+    location: "/tmp/.cache/winetricks/dotnet48"
+- filename: components/winetricks-dotnet40.bst
   config:
-    location: "/wine-assets/dotnet40"
+    location: "/tmp/.cache/winetricks/dotnet40"
+- filename: components/winetricks-sdl.bst
+  config:
+    location: "/tmp/.cache/winetricks/sdl"
+- filename: components/winetricks-7zip.bst
+  config:
+    location: "/tmp/.cache/winetricks/7zip"
+- filename: components/winetricks-vkd3d.bst
+  config:
+    location: "/tmp/.cache/winetricks/vkd3d"
+- filename: components/winetricks-dxvk.bst
+  config:
+    location: "/tmp/.cache/winetricks/dxvk2030"
 - components/winetricks.bst  
 - components/xorg-server-xvfb.bst
 - freedesktop-sdk.bst:components/sed.bst
@@ -49,9 +61,4 @@ config:
     echo "Installing .NET Framework 4.8 via winetricks..."
     export PATH="$PATH:/proton:/proton/files/bin"
 
-    mkdir -pv /tmp/.cache/winetricks/dotnet4{8,0}
-    cp -v /wine-assets/dotnet48/ndp48-x86-x64-allos-enu.exe /tmp/.cache/winetricks/dotnet48
-    cp -v /wine-assets/dotnet40/dotNetFx40_Full_x86_x64.exe /tmp/.cache/winetricks/dotnet40
-    
-    # Install dotnet48 (this may take a while)
-    winetricks -q dotnet48
+    winetricks -q sdl vkd3d dxvk2030 dotnet48
