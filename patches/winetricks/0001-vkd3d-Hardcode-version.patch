@@ -1,0 +1,29 @@
+From 2d3ad3f40dac47dec2b4006e6d06fcf54d94dffb Mon Sep 17 00:00:00 2001
+From: Dom Rodriguez <shymega@shymega.org.uk>
+Date: Wed, 21 Jan 2026 19:49:05 +0000
+Subject: [PATCH 1/2] vkd3d: Hardcode version
+
+Signed-off-by: Dom Rodriguez <shymega@shymega.org.uk>
+---
+ src/winetricks | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100755 => 100644 src/winetricks
+
+diff --git a/src/winetricks b/src/winetricks
+old mode 100755
+new mode 100644
+index 9b7773a..7116cb7
+--- a/src/winetricks
++++ b/src/winetricks
+@@ -8251,7 +8251,7 @@ w_metadata vkd3d dlls \
+ load_vkd3d()
+ {
+     # https://github.com/HansKristian-Work/vkd3d-proton
+-    _W_vkd3d_proton_version="$(w_get_github_latest_release HansKristian-Work vkd3d-proton)"
++    _W_vkd3d_proton_version="v3.0b"
+     _W_vkd3d_proton_version="${_W_vkd3d_proton_version#v}"
+     w_linkcheck_ignore=1 w_download "https://github.com/HansKristian-Work/vkd3d-proton/releases/download/v${_W_vkd3d_proton_version}/vkd3d-proton-${_W_vkd3d_proton_version}.tar.zst"
+     helper_vkd3d_proton "vkd3d-proton-${_W_vkd3d_proton_version}.tar.zst"
+-- 
+2.51.2
+

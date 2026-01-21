@@ -1,0 +1,28 @@
+From 05321f68d0d8c93a6f32eee8b4e2993c300a29fc Mon Sep 17 00:00:00 2001
+From: Dom Rodriguez <shymega@shymega.org.uk>
+Date: Wed, 21 Jan 2026 19:53:22 +0000
+Subject: [PATCH 2/2] vkd3d: Don't set ownership
+
+Fix for BuildStream.
+
+Signed-off-by: Dom Rodriguez <shymega@shymega.org.uk>
+---
+ src/winetricks | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/winetricks b/src/winetricks
+index 7116cb7..75497af 100644
+--- a/src/winetricks
++++ b/src/winetricks
+@@ -8217,7 +8217,7 @@ helper_vkd3d_proton()
+         w_try_unzip "${W_TMP}" "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
+     elif [ "${_W_package_archive##*.}" = "zst" ]; then
+         w_try_cd "${W_TMP}"
+-        w_try tar --use-compress-program=unzstd -xvf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
++        w_try tar --use-compress-program=unzstd --no-same-owner -xvf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
+     else
+         w_try_cd "${W_TMP}"
+         w_try tar -zxf "${W_CACHE}/${W_PACKAGE}/${_W_package_archive}"
+-- 
+2.51.2
+
