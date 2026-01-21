@@ -8,7 +8,9 @@ build-depends:
     location: '/proton'
 - components/winetricks.bst  
 - components/xorg-server-xvfb.bst
-- freedesktop-sdk.bst:public-stacks/buildsystem-python.bst
+- freedesktop-sdk.bst:components/sed.bst
+- freedesktop-sdk.bst:components/gawk.bst
+- freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
 
 # Build configuration
