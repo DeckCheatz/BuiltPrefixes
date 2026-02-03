@@ -6,24 +6,9 @@ build-depends:
 - filename: components/proton-ge-source.bst
   config:
     location: "/proton"
-- filename: components/winetricks-dotnet48.bst
+- filename: components/winetricks-packages.bst
   config:
-    location: "/tmp/.cache/winetricks/dotnet48"
-- filename: components/winetricks-dotnet40.bst
-  config:
-    location: "/tmp/.cache/winetricks/dotnet40"
-- filename: components/winetricks-sdl.bst
-  config:
-    location: "/tmp/.cache/winetricks/sdl"
-- filename: components/winetricks-7zip.bst
-  config:
-    location: "/tmp/.cache/winetricks/7zip"
-- filename: components/winetricks-vkd3d.bst
-  config:
-    location: "/tmp/.cache/winetricks/vkd3d"
-- filename: components/winetricks-dxvk.bst
-  config:
-    location: "/tmp/.cache/winetricks/dxvk2030"
+    location: "/tmp/.cache/winetricks"
 - components/winetricks.bst  
 - components/xorg-server-xvfb.bst
 - freedesktop-sdk.bst:components/sed.bst
