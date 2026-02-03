@@ -3,7 +3,7 @@ kind: junction
 sources:
 - kind: git_repo
   url: gitlab:freedesktop-sdk/freedesktop-sdk.git
-  ref: freedesktop-sdk-25.08.5-0-g95585daebf5a424bb5bcb260868c3245624a37e8
+  ref: freedesktop-sdk-25.08.7-0-g8287748d639f575825280f6d67eec48d60718efa
   track: freedesktop-sdk-25.08.*
 
 config:
