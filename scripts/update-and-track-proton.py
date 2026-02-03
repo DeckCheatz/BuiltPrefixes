@@ -4,7 +4,7 @@ Wrapper script to update Proton-GE config and track the source in BuildStream.
 
 This script:
 1. Calls update-proton-config.py with the provided arguments
-2. Runs 'bst source track' on elements/components/proton-ge-custom.bst
+2. Runs 'bst source track' on components/proton-ge-custom.bst
 """
 
 import subprocess
@@ -21,7 +21,7 @@ def main():
     update_script = script_dir / "update-proton-config.py"
 
     # Path to the BuildStream element
-    bst_element = "elements/components/proton-ge-custom.bst"
+    bst_element = "components/proton-ge-custom.bst"
 
     # Call update-proton-config.py with all arguments passed to this script
     print("=== Updating Proton-GE configuration ===")
