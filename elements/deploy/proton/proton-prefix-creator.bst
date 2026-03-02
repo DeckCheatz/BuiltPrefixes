@@ -10,11 +10,10 @@ build-depends:
   config:
     location: "/tmp/.cache/winetricks"
 - components/winetricks.bst  
-- components/xorg-server-xvfb.bst
 - freedesktop-sdk.bst:components/sed.bst
 - freedesktop-sdk.bst:components/gawk.bst
-- freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
-- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+- freedesktop-sdk.bst:components/grep.bst
+- freedesktop-sdk.bst:components/freetype.bst
 
 # Build configuration
 config:
@@ -22,28 +21,17 @@ config:
     # Set up Wine environment from Proton-GE
   - |
     echo "Setting up Wine environment from Proton-GE..."
-    mkdir -p "%{prefix-root}"
+    mkdir -pv "%{prefix-root}"
+    export PATH="/usr/bin:/bin:/proton:/proton/files/bin"
 
     # Initialize Wine prefix with Proton
   - |
     set -x
     echo "Initializing Wine prefix with wineboot..."
-    
-    # Start Xvfb for headless Wine initialization
-    Xvfb "$DISPLAY" -screen 0 1024x768x24 &
-    XVFB_PID=$!
-    sleep 2
-
-    export PATH="$PATH:/proton:/proton/files/bin"
-    wine wineboot
+    $WINE wineboot
    
-    # Kill Xvfb
-    kill $XVFB_PID || true
-    
     # Install dotnet48 via winetricks
   - |
     set -x
-    echo "Installing .NET Framework 4.8 via winetricks..."
-    export PATH="$PATH:/proton:/proton/files/bin"
-
-    winetricks -q sdl vkd3d dxvk2030 dotnet48
+    echo "Installing dependencies via winetricks..."
+    winetricks sdl vkd3d dxvk2030 dotnet48
