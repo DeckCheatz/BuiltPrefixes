@@ -71,6 +71,18 @@ clean-output:
 generate-matrix start end *args:
     @./scripts/generate-proton-matrix.py "{{start}}" "{{end}}" {{args}}
 
+# Add release metadata entry (for GitHub Pages)
+add-release-metadata version tarball:
+    @./scripts/publish-release-metadata.py add "{{version}}" --tarball "{{tarball}}"
+
+# List release metadata entries
+list-releases *args:
+    @./scripts/publish-release-metadata.py list {{args}}
+
+# Sync release metadata from GitHub
+sync-releases:
+    @./scripts/publish-release-metadata.py sync --from-github
+
 # Show project status
 status:
     @echo "BuildStream Wine Prefix Builder Status:"
