@@ -2,5 +2,4 @@ kind: junction
 sources:
 - kind: git
   url: gitlab:buildstream/buildstream-plugins-community.git
-  track: "master"
-  ref: 3ffb4803cdd5b5755b10d545f31476f09e617f86
+  ref: ef097abaa1dcc317a2220628e84d9b9771a9651e

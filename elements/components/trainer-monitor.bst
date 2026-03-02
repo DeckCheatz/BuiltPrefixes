@@ -1,4 +1,4 @@
-kind: manual
+kind: cargo
 
 build-depends:
 - freedesktop-sdk.bst:components/rust.bst
@@ -6,10 +6,6 @@ build-depends:
 
 depends:
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
-
-config:
-  install-commands:
-  - cargo install --no-track --locked --path . --root "%{install-root}%{prefix}"
 
 sources:
 - kind: git_repo
