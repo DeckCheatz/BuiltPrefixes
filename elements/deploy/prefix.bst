@@ -10,10 +10,21 @@ build-depends:
   config:
     location: "/tmp/.cache/winetricks"
 - components/winetricks.bst  
-- freedesktop-sdk.bst:components/sed.bst
+- freedesktop-sdk.bst:components/curl.bst
+- freedesktop-sdk.bst:components/freetype.bst
 - freedesktop-sdk.bst:components/gawk.bst
 - freedesktop-sdk.bst:components/grep.bst
-- freedesktop-sdk.bst:components/freetype.bst
+- freedesktop-sdk.bst:components/gzip.bst
+- freedesktop-sdk.bst:components/sed.bst
+- freedesktop-sdk.bst:components/tar.bst
+- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+- freedesktop-sdk.bst:cross-compilers/gcc-i686.bst
+- freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
+
+environment:
+  LD_LIBRARY_PATH: "/lib/sdk/toolchain-i386/i686-unknown-linux-gnu/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/proton/files/lib64:/proton/files/lib/proton/files/lib"
+  PATH: "/usr/bin:/bin:/proton:/proton/files/bin"
+  TMPDIR: "/tmp"
 
 # Build configuration
 config:
@@ -22,7 +33,6 @@ config:
   - |
     echo "Setting up Wine environment from Proton-GE..."
     mkdir -pv "%{prefix-root}"
-    export PATH="/usr/bin:/bin:/proton:/proton/files/bin"
 
     # Initialize Wine prefix with Proton
   - |
@@ -34,4 +44,4 @@ config:
   - |
     set -x
     echo "Installing dependencies via winetricks..."
-    winetricks sdl vkd3d dxvk2030 dotnet48
+    winetricks -q sdl vkd3d dxvk2030 dotnet48
