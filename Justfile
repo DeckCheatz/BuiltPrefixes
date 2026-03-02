@@ -67,6 +67,10 @@ clean-output:
     @echo "Cleaning output directories..."
     rm -rf {{output_dir}}
 
+# Generate GitHub Actions matrix for Proton-GE version range
+generate-matrix start end *args:
+    @./scripts/generate-proton-matrix.py "{{start}}" "{{end}}" {{args}}
+
 # Show project status
 status:
     @echo "BuildStream Wine Prefix Builder Status:"
