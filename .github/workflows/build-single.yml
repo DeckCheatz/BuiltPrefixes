@@ -31,7 +31,7 @@ jobs:
 
       - name: Install BuildStream and dependencies
         run: |
-          pip install buildstream buildstream-plugins dulwich requests tomlkit
+          pip install buildstream buildstream-plugins dulwich==0.24.0 requests tomlkit
           sudo apt update
           sudo apt install -y bubblewrap lzip
           bst --version
