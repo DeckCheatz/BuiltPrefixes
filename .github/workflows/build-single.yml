@@ -31,7 +31,7 @@ jobs:
 
       - name: Install BuildStream
         run: |
-          pip install BuildStream2 buildstream-plugins
+          pip install buildstream buildstream-plugins
           bst --version
 
       - name: Restore BuildStream cache
@@ -47,10 +47,6 @@ jobs:
         run: |
           echo "Updating configuration for ${{ inputs.version }}..."
           ./scripts/update-proton-config.py "${{ inputs.version }}" --calculate-checksum
-
-      - name: Fetch BuildStream sources
-        run: |
-          bst source fetch deploy/prefix.bst
 
       - name: Build Wine prefix
         run: |
