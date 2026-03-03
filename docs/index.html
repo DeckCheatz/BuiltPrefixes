@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuiltPrefixes - Pre-built Wine Prefixes</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --primary: #e94560;
+      --text: #eee;
+      --text-muted: #888;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { color: var(--primary); margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+    .card {
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .release {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid var(--bg);
+    }
+    .release:last-child { border-bottom: none; }
+    .release-version { font-weight: bold; font-size: 1.1rem; }
+    .release-meta { color: var(--text-muted); font-size: 0.9rem; }
+    .release-actions a {
+      color: var(--primary);
+      text-decoration: none;
+      margin-left: 1rem;
+    }
+    .release-actions a:hover { text-decoration: underline; }
+    .loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+    .empty { text-align: center; padding: 2rem; color: var(--text-muted); }
+    code {
+      background: var(--bg);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .api-info { margin-top: 2rem; }
+    .api-info h2 { margin-bottom: 1rem; font-size: 1.2rem; }
+    pre {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BuiltPrefixes</h1>
+    <p class="subtitle">Pre-built Wine prefixes with Proton-GE for Steam Deck and Linux gaming</p>
+
+    <div class="card">
+      <h2 style="margin-bottom: 1rem;">Available Releases</h2>
+      <div id="releases">
+        <div class="loading">Loading releases...</div>
+      </div>
+    </div>
+
+    <div class="card api-info">
+      <h2>API Access</h2>
+      <p>Fetch release metadata programmatically:</p>
+      <pre><code>curl -s https://deckcheatz.github.io/BuiltPrefixes/releases.json | jq .</code></pre>
+    </div>
+  </div>
+
+  <script>
+    async function loadReleases() {
+      const container = document.getElementById('releases');
+      try {
+        const response = await fetch('releases.json');
+        const data = await response.json();
+
+        const releases = Object.values(data.releases || {});
+        if (releases.length === 0) {
+          container.innerHTML = '<div class="empty">No releases available yet.</div>';
+          return;
+        }
+
+        // Sort by version (newest first)
+        releases.sort((a, b) => b.proton_version.localeCompare(a.proton_version));
+
+        container.innerHTML = releases.map(r => `
+          <div class="release">
+            <div>
+              <div class="release-version">${r.proton_version}</div>
+              <div class="release-meta">
+                ${r.arch || 'x86_64'} · ${new Date(r.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            <div class="release-actions">
+              <a href="${r.tarball_url}" title="Download tarball">Download</a>
+              <a href="${r.release_url}" title="View release">Release</a>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = '<div class="empty">Failed to load releases.</div>';
+        console.error(e);
+      }
+    }
+    loadReleases();
+  </script>
+</body>
+</html>
