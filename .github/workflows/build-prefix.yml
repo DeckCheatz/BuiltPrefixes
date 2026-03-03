@@ -79,9 +79,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install BuildStream
+      - name: Install BuildStream and dependencies
         run: |
           pip install buildstream buildstream-plugins
+          sudo apt update
+          sudo apt install -y bubblewrap
           bst --version
 
       - name: Restore BuildStream cache
