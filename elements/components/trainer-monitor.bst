@@ -1,8 +1,8 @@
 kind: cargo
 
 build-depends:
-- freedesktop-sdk.bst:components/rust.bst
 - freedesktop-sdk.bst:components/gcc.bst
+- freedesktop-sdk.bst:components/rust.bst
 
 depends:
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
