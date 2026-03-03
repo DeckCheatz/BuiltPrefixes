@@ -1,0 +1,276 @@
+name: Build Wine Prefix
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_version:
+        description: 'Start Proton-GE version (e.g., GE-Proton9-18)'
+        required: true
+        type: string
+      end_version:
+        description: 'End Proton-GE version (e.g., GE-Proton9-20)'
+        required: true
+        type: string
+      verify_versions:
+        description: 'Verify versions exist on GitHub before building'
+        required: false
+        type: boolean
+        default: true
+
+# Prevent concurrent metadata updates
+concurrency:
+  group: release-metadata
+  cancel-in-progress: false
+
+jobs:
+  generate-matrix:
+    name: Generate Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      has_versions: ${{ steps.matrix.outputs.has_versions }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate version matrix
+        id: matrix
+        run: |
+          VERIFY_FLAG=""
+          if [[ "${{ inputs.verify_versions }}" == "true" ]]; then
+            VERIFY_FLAG="--verify"
+          fi
+
+          MATRIX=$(./scripts/generate-proton-matrix.py \
+            "${{ inputs.start_version }}" \
+            "${{ inputs.end_version }}" \
+            $VERIFY_FLAG)
+
+          echo "Generated matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+          # Check if we have any versions to build
+          VERSION_COUNT=$(echo "$MATRIX" | jq '.include | length')
+          if [[ "$VERSION_COUNT" -gt 0 ]]; then
+            echo "has_versions=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_versions=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Build ${{ matrix.version }}
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.has_versions == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install BuildStream
+        run: |
+          pip install BuildStream2 buildstream-plugins
+          bst --version
+
+      - name: Restore BuildStream cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/buildstream
+          key: buildstream-${{ runner.os }}-${{ matrix.version }}-${{ hashFiles('elements/**/*.bst', 'include/**/*.yml') }}
+          restore-keys: |
+            buildstream-${{ runner.os }}-${{ matrix.version }}-
+            buildstream-${{ runner.os }}-
+
+      - name: Update Proton-GE configuration
+        run: |
+          echo "Updating configuration for ${{ matrix.version }}..."
+          ./scripts/update-proton-config.py "${{ matrix.version }}" --calculate-checksum
+
+      - name: Fetch BuildStream sources
+        run: |
+          bst source fetch deploy/prefix.bst
+
+      - name: Build Wine prefix
+        run: |
+          bst build deploy/prefix.bst
+
+      - name: Checkout build artifact
+        run: |
+          mkdir -p out
+          bst artifact checkout --directory out deploy/prefix.bst
+          echo "Artifact contents:"
+          ls -la out/
+
+      - name: Create tarball
+        id: tarball
+        run: |
+          TARBALL_NAME="wine-prefix-${{ matrix.version }}.tar.gz"
+          echo "Creating $TARBALL_NAME..."
+
+          tar -czvf "$TARBALL_NAME" -C out .
+
+          # Calculate SHA256
+          SHA256=$(sha256sum "$TARBALL_NAME" | cut -d' ' -f1)
+          echo "SHA256: $SHA256"
+
+          echo "tarball_name=$TARBALL_NAME" >> $GITHUB_OUTPUT
+          echo "tarball_sha256=$SHA256" >> $GITHUB_OUTPUT
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-prefix-${{ matrix.version }}
+          path: wine-prefix-${{ matrix.version }}.tar.gz
+          retention-days: 7
+
+      - name: Create GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: prefix-${{ matrix.version }}
+          name: Wine Prefix for ${{ matrix.version }}
+          body: |
+            Pre-built Wine prefix using ${{ matrix.version }}.
+
+            ## Contents
+            - Proton-GE: ${{ matrix.version }}
+            - Includes: dotnet48, vkd3d, dxvk2030, sdl
+
+            ## Checksum
+            ```
+            SHA256: ${{ steps.tarball.outputs.tarball_sha256 }}
+            ```
+
+            ## Usage
+            ```bash
+            # Download and extract
+            curl -LO "${{ github.server_url }}/${{ github.repository }}/releases/download/prefix-${{ matrix.version }}/wine-prefix-${{ matrix.version }}.tar.gz"
+            tar -xzf wine-prefix-${{ matrix.version }}.tar.gz -C ~/.wine
+            ```
+          files: |
+            wine-prefix-${{ matrix.version }}.tar.gz
+          draft: false
+          prerelease: false
+
+      - name: Save release info for metadata update
+        run: |
+          mkdir -p release-info
+          echo "${{ matrix.version }}" > release-info/version.txt
+          echo "${{ steps.tarball.outputs.tarball_sha256 }}" > release-info/sha256.txt
+
+      - name: Upload release info
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-info-${{ matrix.version }}
+          path: release-info/
+          retention-days: 1
+
+  update-metadata:
+    name: Update Release Metadata
+    needs: build
+    runs-on: ubuntu-latest
+    # Run even if some builds failed, to update metadata for successful ones
+    if: always() && needs.build.result != 'cancelled'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download all release info artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-info-*
+          path: all-release-info/
+          merge-multiple: false
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update metadata with retry for conflicts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+
+          update_metadata() {
+            # Ensure we have latest changes
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Create docs directory if it doesn't exist
+            mkdir -p docs
+
+            # Process each successful build
+            for info_dir in all-release-info/release-info-*/; do
+              if [[ -d "$info_dir" ]]; then
+                VERSION=$(cat "$info_dir/version.txt" 2>/dev/null || echo "")
+                SHA256=$(cat "$info_dir/sha256.txt" 2>/dev/null || echo "")
+
+                if [[ -n "$VERSION" && -n "$SHA256" ]]; then
+                  echo "Adding metadata for $VERSION (SHA256: $SHA256)"
+                  ./scripts/publish-release-metadata.py add "$VERSION" --sha256 "$SHA256"
+                fi
+              fi
+            done
+
+            # Check if there are changes to commit
+            if git diff --quiet docs/releases.json 2>/dev/null; then
+              echo "No metadata changes to commit"
+              return 0
+            fi
+
+            # Commit and push
+            git add docs/releases.json
+            git commit -m "chore(metadata): Update release metadata for $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          Updated releases:
+          $(ls all-release-info/ | sed 's/release-info-/- /' | head -20)
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+            git push origin main
+          }
+
+          # Retry loop for handling conflicts
+          while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+            if update_metadata; then
+              echo "Metadata updated successfully"
+              exit 0
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "Attempt $RETRY_COUNT failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+
+          echo "Failed to update metadata after $MAX_RETRIES attempts"
+          exit 1
+
+      - name: Upload metadata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-metadata
+          path: docs/releases.json
+          retention-days: 30

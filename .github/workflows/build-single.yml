@@ -1,0 +1,134 @@
+name: Build Single Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Proton-GE version (e.g., GE-Proton9-20)'
+        required: true
+        type: string
+
+# Prevent concurrent metadata updates
+concurrency:
+  group: release-metadata
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ inputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install BuildStream
+        run: |
+          pip install BuildStream2 buildstream-plugins
+          bst --version
+
+      - name: Restore BuildStream cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/buildstream
+          key: buildstream-${{ runner.os }}-${{ inputs.version }}-${{ hashFiles('elements/**/*.bst', 'include/**/*.yml') }}
+          restore-keys: |
+            buildstream-${{ runner.os }}-${{ inputs.version }}-
+            buildstream-${{ runner.os }}-
+
+      - name: Update Proton-GE configuration
+        run: |
+          echo "Updating configuration for ${{ inputs.version }}..."
+          ./scripts/update-proton-config.py "${{ inputs.version }}" --calculate-checksum
+
+      - name: Fetch BuildStream sources
+        run: |
+          bst source fetch deploy/prefix.bst
+
+      - name: Build Wine prefix
+        run: |
+          bst build deploy/prefix.bst
+
+      - name: Checkout build artifact
+        run: |
+          mkdir -p out
+          bst artifact checkout --directory out deploy/prefix.bst
+
+      - name: Create tarball
+        id: tarball
+        run: |
+          TARBALL_NAME="wine-prefix-${{ inputs.version }}.tar.gz"
+          tar -czvf "$TARBALL_NAME" -C out .
+          SHA256=$(sha256sum "$TARBALL_NAME" | cut -d' ' -f1)
+
+          echo "tarball_name=$TARBALL_NAME" >> $GITHUB_OUTPUT
+          echo "tarball_sha256=$SHA256" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: prefix-${{ inputs.version }}
+          name: Wine Prefix for ${{ inputs.version }}
+          body: |
+            Pre-built Wine prefix using ${{ inputs.version }}.
+
+            ## Contents
+            - Proton-GE: ${{ inputs.version }}
+            - Includes: dotnet48, vkd3d, dxvk2030, sdl
+
+            ## Checksum
+            ```
+            SHA256: ${{ steps.tarball.outputs.tarball_sha256 }}
+            ```
+          files: |
+            wine-prefix-${{ inputs.version }}.tar.gz
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update release metadata
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+
+          while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            mkdir -p docs
+            ./scripts/publish-release-metadata.py add "${{ inputs.version }}" \
+              --sha256 "${{ steps.tarball.outputs.tarball_sha256 }}"
+
+            if git diff --quiet docs/releases.json 2>/dev/null; then
+              echo "No metadata changes"
+              exit 0
+            fi
+
+            git add docs/releases.json
+            git commit -m "chore(metadata): Add release ${{ inputs.version }}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+            if git push origin main; then
+              echo "Metadata updated"
+              exit 0
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Push failed, retry $RETRY_COUNT..."
+            sleep 5
+          done
+
+          echo "Failed after $MAX_RETRIES attempts"
+          exit 1
