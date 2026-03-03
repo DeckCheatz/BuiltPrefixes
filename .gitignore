@@ -13,3 +13,6 @@
 
 /.bst
 /.bst2
+
+# Ignore future changes to this file
+/include/proton-ge-config.yml
