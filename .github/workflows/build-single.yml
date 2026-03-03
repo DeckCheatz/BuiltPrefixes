@@ -36,6 +36,11 @@ jobs:
           sudo apt install -y bubblewrap lzip
           bst --version
 
+      - name: Lift AppArmor restrictions for bubblewrap
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0 
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: Restore BuildStream cache
         uses: actions/cache@v4
         with:
