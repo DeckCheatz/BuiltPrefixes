@@ -8,7 +8,7 @@ default:
 
 # Variables
 bst_cmd := "bst"
-default_element := "wine-prefix.bst"
+default_element := "deploy/prefix.bst"
 output_dir := "./output"
 
 # Check if BuildStream is installed
