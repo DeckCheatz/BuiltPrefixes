@@ -2,10 +2,19 @@ kind: cargo
 
 build-depends:
 - freedesktop-sdk.bst:components/gcc.bst
-- freedesktop-sdk.bst:components/rust.bst
+- freedesktop-sdk.bst:components/stripper.bst
+- toolchains/rust-windows-i686-stack.bst
 
 depends:
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+
+variables:
+  cargo-install-local: >-
+    --target=i686-pc-windows-gnu
+
+environment:
+  # Add MinGW toolchain to PATH for the linker
+  PATH: "/usr/mingw-w64/i686-w64-mingw32/bin:/usr/bin:/bin"
 
 sources:
 - kind: git_repo
