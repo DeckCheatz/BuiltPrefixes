@@ -1,26 +1,51 @@
+# Trainer Monitor
+#
+# A Rust application cross-compiled to Windows 32-bit (i686-pc-windows-gnu).
+# This element demonstrates how to build Rust applications for Windows
+# using the MinGW-w64 cross-compilation toolchain.
+#
+# Output: Windows PE32 executable
+#
+# Build requirements:
+#   - Rust compiler (from freedesktop-sdk)
+#   - MinGW-w64 i686 toolchain (for Windows target)
+#   - Rust standard library for i686-pc-windows-gnu
+#
+# Repository: https://github.com/DeckCheatz/trainer-monitor
+#
 kind: cargo
 
 build-depends:
+# Host GCC for any native compilation steps
 - freedesktop-sdk.bst:components/gcc.bst
+# Strip utility (though Windows binaries may not need it)
 - freedesktop-sdk.bst:components/stripper.bst
+# Complete Rust Windows i686 cross-compilation stack
 - toolchains/rust-windows-i686-stack.bst
 
 depends:
+# Minimal runtime for build environment
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
 
 variables:
+  # Configure cargo to cross-compile to Windows 32-bit
   cargo-install-local: >-
     --target=i686-pc-windows-gnu
 
 environment:
-  # Add MinGW toolchain to PATH for the linker
+  # Add MinGW toolchain to PATH so cargo can find the linker
+  # The linker (i686-w64-mingw32-gcc) must be accessible
   PATH: "/usr/mingw-w64/i686-w64-mingw32/bin:/usr/bin:/bin"
 
 sources:
+# Main application source code
 - kind: git_repo
   url: github:DeckCheatz/trainer-monitor.git
   track: main
   ref: e0107857758f44f606631cc1dd2c501ac6683d95
+
+# Vendored cargo dependencies (cargo2 source plugin)
+# This ensures reproducible builds by pinning exact dependency versions
 - kind: cargo2
   ref:
   - kind: registry
