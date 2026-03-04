@@ -3,6 +3,9 @@ kind: manual
 depends:
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
 
+config:
+  strip-commands: []
+
 sources:
 - kind: git_repo
   url: github:winetricks/winetricks

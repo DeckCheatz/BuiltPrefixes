@@ -45,3 +45,5 @@ config:
     set -x
     echo "Installing dependencies via winetricks..."
     winetricks -q sdl vkd3d dxvk2030 dotnet48
+
+  strip-commands: []

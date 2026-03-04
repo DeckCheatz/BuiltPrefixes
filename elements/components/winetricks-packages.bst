@@ -12,6 +12,8 @@ config:
   - install -Dm644 -t "%{install-root}/sdl" SDL-1.2.15-win32.zip
   - install -Dm644 -t "%{install-root}/vkd3d" vkd3d-proton-%{vkd3d-proton-version}.tar.zst
 
+  strip-commands: []
+
 variables:
   vkd3d-proton-version: "3.0b"
 
