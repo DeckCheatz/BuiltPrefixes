@@ -1,3 +1,11 @@
+# Build a single GE-Proton version.
+#
+# This workflow is a thin wrapper around the reusable build-version.yml workflow.
+# It triggers a build for a single version and updates metadata immediately.
+#
+# Usage:
+#   Trigger manually via workflow_dispatch with the desired version.
+
 name: Build Single Version
 
 on:
@@ -16,122 +24,8 @@ concurrency:
 jobs:
   build:
     name: Build ${{ inputs.version }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install BuildStream and dependencies
-        run: |
-          pip install buildstream buildstream-plugins dulwich==0.24.0 requests tomlkit
-          sudo apt update
-          sudo apt install -y bubblewrap lzip
-          bst --version
-
-      - name: Lift AppArmor restrictions for bubblewrap
-        run: |
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0 
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-
-      - name: Restore BuildStream cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/buildstream
-          key: buildstream-${{ runner.os }}-${{ inputs.version }}-${{ hashFiles('elements/**/*.bst', 'include/**/*.yml') }}
-          restore-keys: |
-            buildstream-${{ runner.os }}-${{ inputs.version }}-
-            buildstream-${{ runner.os }}-
-
-      - name: Update Proton-GE configuration
-        run: |
-          echo "Updating configuration for ${{ inputs.version }}..."
-          ./scripts/update-proton-config.py "${{ inputs.version }}" --calculate-checksum
-
-      - name: Build Wine prefix
-        run: |
-          bst build deploy/prefix.bst
-
-      - name: Checkout build artifact
-        run: |
-          mkdir -p out
-          bst artifact checkout --directory out deploy/prefix.bst
-
-      - name: Create tarball
-        id: tarball
-        run: |
-          TARBALL_NAME="wine-prefix-${{ inputs.version }}.tar.gz"
-          tar -czvf "$TARBALL_NAME" -C out .
-          SHA256=$(sha256sum "$TARBALL_NAME" | cut -d' ' -f1)
-
-          echo "tarball_name=$TARBALL_NAME" >> $GITHUB_OUTPUT
-          echo "tarball_sha256=$SHA256" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: prefix-${{ inputs.version }}
-          name: Wine Prefix for ${{ inputs.version }}
-          body: |
-            Pre-built Wine prefix using ${{ inputs.version }}.
-
-            ## Contents
-            - Proton-GE: ${{ inputs.version }}
-            - Includes: dotnet48, vkd3d, dxvk2030, sdl
-
-            ## Checksum
-            ```
-            SHA256: ${{ steps.tarball.outputs.tarball_sha256 }}
-            ```
-          files: |
-            wine-prefix-${{ inputs.version }}.tar.gz
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Update release metadata
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          MAX_RETRIES=5
-          RETRY_COUNT=0
-
-          while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
-            git fetch origin main
-            git reset --hard origin/main
-
-            mkdir -p docs
-            ./scripts/publish-release-metadata.py add "${{ inputs.version }}" \
-              --sha256 "${{ steps.tarball.outputs.tarball_sha256 }}"
-
-            if git diff --quiet docs/releases.json 2>/dev/null; then
-              echo "No metadata changes"
-              exit 0
-            fi
-
-            git add docs/releases.json
-            git commit -m "chore(metadata): Add release ${{ inputs.version }}
-
-          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-
-            if git push origin main; then
-              echo "Metadata updated"
-              exit 0
-            fi
-
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Push failed, retry $RETRY_COUNT..."
-            sleep 5
-          done
-
-          echo "Failed after $MAX_RETRIES attempts"
-          exit 1
+    uses: ./.github/workflows/build-version.yml
+    with:
+      version: ${{ inputs.version }}
+      update_metadata: true
+    secrets: inherit
