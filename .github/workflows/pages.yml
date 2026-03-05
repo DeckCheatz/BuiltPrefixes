@@ -1,10 +1,29 @@
+# Deploy docs to GitHub Pages.
+#
+# Triggers:
+#   - After build-single or build-matrix workflows complete (metadata updates)
+#   - On direct pushes to docs/** (manual documentation changes)
+#   - Manual workflow dispatch
+
 name: Deploy to GitHub Pages
 
 on:
+  # Trigger after build workflows complete and update metadata
+  workflow_run:
+    workflows:
+      - "Build Single Version"
+      - "Build Matrix"
+    types:
+      - completed
+    branches: [main]
+
+  # Direct pushes to docs (manual documentation updates)
   push:
     branches: [main]
     paths:
       - 'docs/**'
+
+  # Manual trigger
   workflow_dispatch:
 
 permissions:
@@ -20,12 +39,19 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    # Only deploy if workflow_run succeeded, or if triggered by push/dispatch
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Ensure we get the latest changes from the triggering workflow
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
