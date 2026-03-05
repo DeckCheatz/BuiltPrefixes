@@ -1,4 +1,13 @@
-name: Build Wine Prefix
+# Build multiple GE-Proton versions using a matrix strategy.
+#
+# This workflow generates a version matrix from a range and calls the reusable
+# build-version.yml workflow for each version in parallel. Metadata is updated
+# in a separate aggregation job after all builds complete.
+#
+# Usage:
+#   Trigger manually via workflow_dispatch with start and end versions.
+
+name: Build Matrix
 
 on:
   workflow_dispatch:
@@ -29,6 +38,7 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       has_versions: ${{ steps.matrix.outputs.has_versions }}
+      versions: ${{ steps.matrix.outputs.versions }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,6 +64,10 @@ jobs:
           echo "Generated matrix: $MATRIX"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
+          # Extract version list for metadata job
+          VERSIONS=$(echo "$MATRIX" | jq -c '[.include[].version]')
+          echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+
           # Check if we have any versions to build
           VERSION_COUNT=$(echo "$MATRIX" | jq '.include | length')
           if [[ "$VERSION_COUNT" -gt 0 ]]; then
@@ -66,123 +80,18 @@ jobs:
     name: Build ${{ matrix.version }}
     needs: generate-matrix
     if: needs.generate-matrix.outputs.has_versions == 'true'
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install BuildStream and dependencies
-        run: |
-          pip install buildstream buildstream-plugins dulwich==0.24.0 requests tomlkit
-          sudo apt update
-          sudo apt install -y bubblewrap lzip
-          bst --version
-
-      - name: Lift AppArmor restrictions for bubblewrap
-        run: |
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0 
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-
-      - name: Restore BuildStream cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/buildstream
-          key: buildstream-${{ runner.os }}-${{ matrix.version }}-${{ hashFiles('elements/**/*.bst', 'include/**/*.yml') }}
-          restore-keys: |
-            buildstream-${{ runner.os }}-${{ matrix.version }}-
-            buildstream-${{ runner.os }}-
-
-      - name: Update Proton-GE configuration
-        run: |
-          echo "Updating configuration for ${{ matrix.version }}..."
-          ./scripts/update-proton-config.py "${{ matrix.version }}" --calculate-checksum
-
-      - name: Build Wine prefix
-        run: |
-          bst build deploy/prefix.bst
-
-      - name: Checkout build artifact
-        run: |
-          mkdir -p out
-          bst artifact checkout --directory out deploy/prefix.bst
-          echo "Artifact contents:"
-          ls -la out/
-
-      - name: Create tarball
-        id: tarball
-        run: |
-          TARBALL_NAME="wine-prefix-${{ matrix.version }}.tar.gz"
-          echo "Creating $TARBALL_NAME..."
-
-          tar -czvf "$TARBALL_NAME" -C out .
-
-          # Calculate SHA256
-          SHA256=$(sha256sum "$TARBALL_NAME" | cut -d' ' -f1)
-          echo "SHA256: $SHA256"
-
-          echo "tarball_name=$TARBALL_NAME" >> $GITHUB_OUTPUT
-          echo "tarball_sha256=$SHA256" >> $GITHUB_OUTPUT
-
-      - name: Upload tarball artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wine-prefix-${{ matrix.version }}
-          path: wine-prefix-${{ matrix.version }}.tar.gz
-          retention-days: 7
-
-      - name: Create GitHub Release
-        id: release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: prefix-${{ matrix.version }}
-          name: Wine Prefix for ${{ matrix.version }}
-          body: |
-            Pre-built Wine prefix using ${{ matrix.version }}.
-
-            ## Contents
-            - Proton-GE: ${{ matrix.version }}
-            - Includes: dotnet48, vkd3d, dxvk2030, sdl
-
-            ## Checksum
-            ```
-            SHA256: ${{ steps.tarball.outputs.tarball_sha256 }}
-            ```
-
-            ## Usage
-            ```bash
-            # Download and extract
-            curl -LO "${{ github.server_url }}/${{ github.repository }}/releases/download/prefix-${{ matrix.version }}/wine-prefix-${{ matrix.version }}.tar.gz"
-            tar -xzf wine-prefix-${{ matrix.version }}.tar.gz -C ~/.wine
-            ```
-          files: |
-            wine-prefix-${{ matrix.version }}.tar.gz
-          draft: false
-          prerelease: false
-
-      - name: Save release info for metadata update
-        run: |
-          mkdir -p release-info
-          echo "${{ matrix.version }}" > release-info/version.txt
-          echo "${{ steps.tarball.outputs.tarball_sha256 }}" > release-info/sha256.txt
-
-      - name: Upload release info
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-info-${{ matrix.version }}
-          path: release-info/
-          retention-days: 1
+    uses: ./.github/workflows/build-version.yml
+    with:
+      version: ${{ matrix.version }}
+      update_metadata: false
+    secrets: inherit
 
   update-metadata:
     name: Update Release Metadata
-    needs: build
+    needs: [generate-matrix, build]
     runs-on: ubuntu-latest
     # Run even if some builds failed, to update metadata for successful ones
     if: always() && needs.build.result != 'cancelled'
