@@ -69,15 +69,13 @@ jobs:
       # Shared across all Proton-GE versions to reuse expensive artifacts like GCC, MinGW
       # The CAS is content-addressable so artifacts are deduplicated by hash
       - name: Restore BuildStream cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v5
         with:
           path: ~/.cache/buildstream
           # Key based on toolchain elements only - these are expensive and shared
           key: buildstream-cas-${{ runner.os }}-${{ hashFiles('elements/toolchains/**/*.bst') }}
           restore-keys: |
             buildstream-cas-${{ runner.os }}-
-          # Enable save even on failure to preserve partial builds
-          save-always: true
 
       - name: Update Proton-GE configuration
         run: |
@@ -86,7 +84,15 @@ jobs:
 
       - name: Build Wine prefix
         run: |
-          bst build deploy/prefix.bst
+          bst --network-retries 10 --on-error quit build deploy/prefix.bst
+
+      - name: Save BuildStream cache
+        uses: actions/cache/save@v5
+        if: always()
+        with:
+          path: ~/.cache/buildstream
+          # Key based on toolchain elements only - these are expensive and shared
+          key: buildstream-cas-${{ runner.os }}-${{ hashFiles('elements/toolchains/**/*.bst') }}
 
       - name: Checkout build artifact
         run: |
