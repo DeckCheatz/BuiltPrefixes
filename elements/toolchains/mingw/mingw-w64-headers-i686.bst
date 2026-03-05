@@ -64,5 +64,5 @@ sources:
 # mingw-w64 project repository
 - kind: git_repo
   url: github:mingw-w64/mingw-w64.git
-  track: master
-  ref: v13.0.0-560-g3197fc7d6146d2c53082e302112748a157ca0074
+  track: "v*.*.*"
+  ref: v13.0.0-0-gde62c283f3383bd825c98518cb0a42ba071d4ac2
