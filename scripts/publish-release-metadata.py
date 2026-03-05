@@ -17,10 +17,13 @@ The metadata file structure:
       "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton9-20/wine-prefix-GE-Proton9-20.tar.gz",
       "tarball_sha256": "abc123...",
       "created_at": "2024-01-15T12:00:00Z",
+      "last_modified": "2024-01-15T12:00:00Z",
       "arch": "x86_64"
     }
   }
 }
+
+Clients can use "last_modified" to determine if a prefix needs updating.
 
 Usage:
   ./scripts/publish-release-metadata.py add GE-Proton9-20 --tarball ./output/prefix.tar.gz
@@ -72,8 +75,18 @@ def load_metadata(metadata_file: Path) -> dict:
 
 
 def save_metadata(metadata: dict, metadata_file: Path) -> None:
-    """Save metadata to file."""
+    """Save metadata to file.
+
+    Also migrates existing entries to include last_modified if missing.
+    """
     metadata["updated_at"] = get_iso_timestamp()
+
+    # Migrate existing entries to include last_modified if missing
+    for entry in metadata.get("releases", {}).values():
+        if "last_modified" not in entry:
+            # Use created_at as initial last_modified for existing entries
+            entry["last_modified"] = entry.get("created_at", metadata["updated_at"])
+
     metadata_file.parent.mkdir(parents=True, exist_ok=True)
     with open(metadata_file, "w") as f:
         json.dump(metadata, f, indent=2, sort_keys=False)
@@ -98,11 +111,24 @@ def build_release_entry(
     proton_version: str,
     repo: str,
     sha256: Optional[str] = None,
-    arch: str = "x86_64"
+    arch: str = "x86_64",
+    created_at: Optional[str] = None
 ) -> dict:
-    """Build a release metadata entry."""
+    """Build a release metadata entry.
+
+    Args:
+        proton_version: The Proton-GE version string
+        repo: GitHub repository in owner/repo format
+        sha256: SHA256 checksum of the tarball
+        arch: Target architecture
+        created_at: Original creation timestamp (preserved on updates)
+
+    Returns:
+        Release metadata dictionary with last_modified timestamp
+    """
     release_tag = get_release_tag(proton_version, arch)
     tarball_name = get_tarball_name(proton_version, arch)
+    now = get_iso_timestamp()
 
     return {
         "proton_version": proton_version,
@@ -111,7 +137,8 @@ def build_release_entry(
         "tarball_url": f"https://github.com/{repo}/releases/download/{release_tag}/{tarball_name}",
         "tarball_name": tarball_name,
         "tarball_sha256": sha256 or "",
-        "created_at": get_iso_timestamp(),
+        "created_at": created_at or now,
+        "last_modified": now,
         "arch": arch
     }
 
@@ -130,23 +157,30 @@ def cmd_add(args) -> int:
         sha256 = calculate_sha256(tarball_path)
         print(f"Calculated SHA256: {sha256}")
 
+    # Use composite key for multi-arch support
+    entry_key = args.version if args.arch == "x86_64" else f"{args.version}-{args.arch}"
+
+    # Check if updating existing entry - preserve created_at
+    existing_entry = metadata["releases"].get(entry_key)
+    created_at = existing_entry.get("created_at") if existing_entry else None
+    is_update = existing_entry is not None
+
     # Build entry
     entry = build_release_entry(
         proton_version=args.version,
         repo=args.repo,
         sha256=sha256,
-        arch=args.arch
+        arch=args.arch,
+        created_at=created_at
     )
-
-    # Use composite key for multi-arch support
-    entry_key = args.version if args.arch == "x86_64" else f"{args.version}-{args.arch}"
 
     metadata["releases"][entry_key] = entry
     metadata["repository"] = args.repo
 
     save_metadata(metadata, args.metadata_file)
 
-    print(f"Added release entry for {args.version} ({args.arch}):")
+    action = "Updated" if is_update else "Added"
+    print(f"{action} release entry for {args.version} ({args.arch}):")
     print(json.dumps(entry, indent=2))
 
     return 0
@@ -247,13 +281,17 @@ def cmd_sync(args) -> int:
                 tarball_asset = asset
                 break
 
+        # Preserve created_at from existing entry if updating
+        existing_entry = metadata["releases"].get(entry_key)
+        existing_created_at = existing_entry.get("created_at") if existing_entry else None
+
         entry = build_release_entry(
             proton_version=proton_version,
             repo=args.repo,
             sha256=None,  # Would need to download to calculate
-            arch=arch
+            arch=arch,
+            created_at=existing_created_at or release["createdAt"]
         )
-        entry["created_at"] = release["createdAt"]
 
         metadata["releases"][entry_key] = entry
         added += 1
