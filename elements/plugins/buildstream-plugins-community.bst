@@ -19,12 +19,12 @@
 #     - cargo2
 #     - git_repo
 #
-# Repository: https://gitlab.com/nicofabian/buildstream-plugins-community
+# Repository: https://gitlab.com/BuildStream/buildstream-plugins-community
 #
 kind: junction
 
 sources:
 - kind: git
-  url: gitlab:nicofabian/buildstream-plugins-community.git
-  track: master
-  ref: f32f4c29dba1b68bc105f401b237628a159bb2ca
+  url: gitlab:BuildStream/buildstream-plugins-community.git
+  track: "master"
+  ref: 2.3.0-0-g203393ec525234c275ceb528f5aa149941f82576
