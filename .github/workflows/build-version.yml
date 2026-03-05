@@ -65,14 +65,19 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
+      # BuildStream CAS (Content Addressable Storage) cache
+      # Shared across all Proton-GE versions to reuse expensive artifacts like GCC, MinGW
+      # The CAS is content-addressable so artifacts are deduplicated by hash
       - name: Restore BuildStream cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/buildstream
-          key: buildstream-${{ runner.os }}-${{ inputs.version }}-${{ hashFiles('elements/**/*.bst', 'include/**/*.yml') }}
+          # Key based on toolchain elements only - these are expensive and shared
+          key: buildstream-cas-${{ runner.os }}-${{ hashFiles('elements/toolchains/**/*.bst') }}
           restore-keys: |
-            buildstream-${{ runner.os }}-${{ inputs.version }}-
-            buildstream-${{ runner.os }}-
+            buildstream-cas-${{ runner.os }}-
+          # Enable save even on failure to preserve partial builds
+          save-always: true
 
       - name: Update Proton-GE configuration
         run: |
