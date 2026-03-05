@@ -33,6 +33,11 @@ build-depends:
 # Winetricks helper script
 - components/winetricks.bst
 
+# trainer-monitor - Win32/Linux watchdog for modding tools.
+- filename: components/trainer-monitor.bst
+  config:
+    location: "/tmp/trainer-monitor"
+
 # Utilities required by winetricks and prefix setup
 - freedesktop-sdk.bst:components/curl.bst
 - freedesktop-sdk.bst:components/freetype.bst
@@ -74,9 +79,13 @@ config:
   # Step 3: Install Windows components via winetricks
   # -q flag runs in quiet/unattended mode
   - |
-    set -x
     echo "Installing dependencies via winetricks..."
     winetricks -q sdl vkd3d dxvk2030 dotnet48
+
+  # Step 4: Install trainer-monitor into C:\Windows\system32
+  - |
+    echo "Installing trainer-monitor..."
+    install -Dm644 -t "${prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
 
   # No binary stripping for Wine prefix
   strip-commands: []
