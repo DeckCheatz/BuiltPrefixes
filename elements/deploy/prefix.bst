@@ -42,6 +42,7 @@ build-depends:
 - freedesktop-sdk.bst:components/curl.bst
 - freedesktop-sdk.bst:components/freetype.bst
 - freedesktop-sdk.bst:components/gawk.bst
+- freedesktop-sdk.bst:components/gnutls.bst
 - freedesktop-sdk.bst:components/grep.bst
 - freedesktop-sdk.bst:components/gzip.bst
 - freedesktop-sdk.bst:components/sed.bst
