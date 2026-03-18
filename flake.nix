@@ -18,9 +18,13 @@
           nativeBuildInputs = with pkgs; [
             lzip
             buildbox
-            python3Packages.packaging
-            python3Packages.pip
-          ];
+          ] ++ (with pkgs.python3Packages; [
+            packaging
+            pip
+            tomlkit
+            requests
+            dulwich
+          ]);
         };
       }
     );
