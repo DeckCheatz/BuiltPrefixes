@@ -42,7 +42,7 @@ sources:
 - kind: git_repo
   url: github:DeckCheatz/trainer-monitor.git
   track: main
-  ref: e0107857758f44f606631cc1dd2c501ac6683d95
+  ref: 56dea9a0838a300e9dcc9273df1f4a4ed3cfdf63
 
 # Vendored cargo dependencies (cargo2 source plugin)
 # This ensures reproducible builds by pinning exact dependency versions
