@@ -18,6 +18,7 @@
           nativeBuildInputs = with pkgs; [
             lzip
             buildbox
+            buildstream
           ] ++ (with pkgs.python3Packages; [
             packaging
             pip
