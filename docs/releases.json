@@ -1,5 +1,96 @@
 {
   "repository": "DeckCheatz/BuiltPrefixes",
-  "updated_at": "1970-01-01T00:00:00Z",
-  "releases": {}
+  "updated_at": "2026-03-28T13:22:00Z",
+  "releases": {
+    "GE-Proton10-20": {
+      "proton_version": "GE-Proton10-20",
+      "release_tag": "prefix-GE-Proton10-20",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-20",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-20/wine-prefix-GE-Proton10-20.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-20.tar.gz",
+      "tarball_sha256": "1ac9c1fc21eef7a69a0cf4c706ef7d0420a65cde5c5e1bdd4daf0e024cdba5c4",
+      "created_at": "2026-03-28T13:21:59Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-21": {
+      "proton_version": "GE-Proton10-21",
+      "release_tag": "prefix-GE-Proton10-21",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-21",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-21/wine-prefix-GE-Proton10-21.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-21.tar.gz",
+      "tarball_sha256": "b444cfbe11c53cc1133bd3af5164eb6d80965e527694409b01e7d4c768a69df5",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-22": {
+      "proton_version": "GE-Proton10-22",
+      "release_tag": "prefix-GE-Proton10-22",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-22",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-22/wine-prefix-GE-Proton10-22.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-22.tar.gz",
+      "tarball_sha256": "4e6fb5b5214b24bd79f63447ec28b6587842317d2534e0b87fa18959a9c9ad6b",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-24": {
+      "proton_version": "GE-Proton10-24",
+      "release_tag": "prefix-GE-Proton10-24",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-24",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-24/wine-prefix-GE-Proton10-24.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-24.tar.gz",
+      "tarball_sha256": "c6ce970127d5727ab83ced28635185b20c3764764e054655a4a441a6b470d7c9",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-25": {
+      "proton_version": "GE-Proton10-25",
+      "release_tag": "prefix-GE-Proton10-25",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-25",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-25/wine-prefix-GE-Proton10-25.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-25.tar.gz",
+      "tarball_sha256": "22d7ecc7965ad5a92dfdd27577f1861c32b003a6e5828a3b1a7185851efe484c",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-26": {
+      "proton_version": "GE-Proton10-26",
+      "release_tag": "prefix-GE-Proton10-26",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-26",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-26/wine-prefix-GE-Proton10-26.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-26.tar.gz",
+      "tarball_sha256": "6cd4b6f9646482904108f322f6ebbdc1e9cb089bf9b57af556cd0b558e2d00c2",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-27": {
+      "proton_version": "GE-Proton10-27",
+      "release_tag": "prefix-GE-Proton10-27",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-27",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-27/wine-prefix-GE-Proton10-27.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-27.tar.gz",
+      "tarball_sha256": "ec96eebc00fc5181a5f8ca4e5f8338bc13c3d72174612778959dbdee8562762e",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-28": {
+      "proton_version": "GE-Proton10-28",
+      "release_tag": "prefix-GE-Proton10-28",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-28",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-28/wine-prefix-GE-Proton10-28.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-28.tar.gz",
+      "tarball_sha256": "c74b87bbfe3db004c2e37e6a9badb2e399e4da464bc9b439704698a8e074adda",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    },
+    "GE-Proton10-29": {
+      "proton_version": "GE-Proton10-29",
+      "release_tag": "prefix-GE-Proton10-29",
+      "release_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/tag/prefix-GE-Proton10-29",
+      "tarball_url": "https://github.com/DeckCheatz/BuiltPrefixes/releases/download/prefix-GE-Proton10-29/wine-prefix-GE-Proton10-29.tar.gz",
+      "tarball_name": "wine-prefix-GE-Proton10-29.tar.gz",
+      "tarball_sha256": "f9bb70c8e394ae8f9553631b4a9aac98b4a1fa825ec73541d1002c507201376c",
+      "created_at": "2026-03-28T13:22:00Z",
+      "arch": "x86_64"
+    }
+  }
 }
