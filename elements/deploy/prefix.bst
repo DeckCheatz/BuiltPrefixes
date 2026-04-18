@@ -58,16 +58,19 @@ build-depends:
         - freedesktop-sdk.bst:cross-compilers/freedesktop-sdk-i686.bst:components/gnutls.bst
         - freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
         - freedesktop-sdk.bst:cross-compilers/gcc-i686.bst
+      environment:
+        LD_LIBRARY_PATH: "/lib/sdk/toolchain-i386/i686-unknown-linux-gnu/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/proton/files/lib64:/proton/files/lib/proton/files/lib"
   - target_arch == 'i686':
 # Native 32-bit compiler for 32-bit Wine components
       build-depends:
         (>):
         - freedesktop-sdk.bst:bootstrap/glibc.bst
         - freedesktop-sdk.bst:bootstrap/gcc.bst
+      environment:
+        LD_LIBRARY_PATH: "/proton/files/lib/proton/files/lib"
 
 environment:
   # Library paths for 32-bit and 64-bit Wine libraries
-  LD_LIBRARY_PATH: "/lib/sdk/toolchain-i386/i686-unknown-linux-gnu/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/proton/files/lib64:/proton/files/lib/proton/files/lib"
   # Include Proton binaries in PATH
   PATH: "/usr/bin:/bin:/proton:/proton/files/bin"
   # Temporary directory for Wine operations
