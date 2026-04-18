@@ -48,12 +48,22 @@ build-depends:
 - freedesktop-sdk.bst:components/sed.bst
 - freedesktop-sdk.bst:components/tar.bst
 
-# i686 cross-compiler for 32-bit Wine components
-- freedesktop-sdk.bst:cross-compilers/gcc-i686.bst
-- freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
-
 # Base runtime
 - freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+
+(?):
+  - target_arch == 'x86_64':
+# i686 cross-compiler for 32-bit Wine components
+      build-depends:
+        (>):
+        - freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
+        - freedesktop-sdk.bst:cross-compilers/gcc-i686.bst
+  - target_arch == 'i686':
+# Native 32-bit compiler for 32-bit Wine components
+      build-depends:
+        (>):
+        - freedesktop-sdk.bst:bootstrap/glibc.bst
+        - freedesktop-sdk.bst:bootstrap/gcc.bst
 
 environment:
   # Library paths for 32-bit and 64-bit Wine libraries
