@@ -24,7 +24,6 @@ config:
   options:
     # Pass through target architecture to the junction
     target_arch: '%{target-arch}'
-    bootstrap_build_arch: '%{target-arch}'
     # For i686 targets, use x86_64 for bootstrap to avoid circular dependencies
     (?):
     - target_arch == 'i686':
