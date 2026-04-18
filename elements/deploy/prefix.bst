@@ -65,7 +65,7 @@ build-depends:
       build-depends:
         (>):
         - freedesktop-sdk.bst:bootstrap/glibc.bst
-        - freedesktop-sdk.bst:bootstrap/gcc.bst
+        - freedesktop-sdk.bst:components/gcc.bst
       environment:
         LD_LIBRARY_PATH: "/proton/files/lib/proton/files/lib"
 
