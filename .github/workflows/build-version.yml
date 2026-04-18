@@ -84,7 +84,7 @@ jobs:
 
       - name: Build Wine prefix
         run: |
-          bst --network-retries 10 --on-error quit build deploy/prefix.bst
+          bst -o target_arch i686 --network-retries 10 --on-error quit build deploy/prefix.bst
 
       - name: Save BuildStream cache
         uses: actions/cache/save@v5
@@ -97,7 +97,7 @@ jobs:
       - name: Checkout build artifact
         run: |
           mkdir -p out
-          bst artifact checkout --directory out deploy/prefix.bst
+          bst -o target_arch i686 artifact checkout --directory out deploy/prefix.bst
           echo "Artifact contents:"
           ls -la out/
 
