@@ -42,7 +42,6 @@ build-depends:
 - freedesktop-sdk.bst:components/curl.bst
 - freedesktop-sdk.bst:components/freetype.bst
 - freedesktop-sdk.bst:components/gawk.bst
-- freedesktop-sdk.bst:components/gnutls.bst
 - freedesktop-sdk.bst:components/grep.bst
 - freedesktop-sdk.bst:components/gzip.bst
 - freedesktop-sdk.bst:components/sed.bst
@@ -56,6 +55,7 @@ build-depends:
 # i686 cross-compiler for 32-bit Wine components
       build-depends:
         (>):
+        - freedesktop-sdk.bst:cross-compilers/freedesktop-sdk-i686.bst:components/gnutls.bst
         - freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
         - freedesktop-sdk.bst:cross-compilers/gcc-i686.bst
   - target_arch == 'i686':
