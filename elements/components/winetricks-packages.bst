@@ -42,8 +42,8 @@ sources:
 
 # .NET Framework 4.8 - via archive.org for stability
 - kind: remote
-  directory: "dotnet48"
   url: "tar_https:web.archive.org/web/2000/https://download.visualstudio.microsoft.com/download/pr/7afca223-55d2-470a-8edc-6a1739ae3252/abd170b4b0ec15ad0222a809b761a036/ndp48-x86-x64-allos-enu.exe"
+  directory: "dotnet48"
   ref: "95889d6de3f2070c07790ad6cf2000d33d9a1bdfc6a381725ab82ab1c314fd53"
 
 # DXVK 2.3 - DirectX 9/10/11 to Vulkan
@@ -54,8 +54,8 @@ sources:
 
 # SDL 1.2.15 - legacy SDL for older games
 - kind: remote
-  directory: "sdl"
   url: "tar_https:web.archive.org/web/2000/https://www.libsdl.org/release/SDL-1.2.15-win32.zip"
+  directory: "sdl"
   ref: "a28bbe38714ef7817b1c1e8082a48f391f15e4043402444b783952fca939edc1"
 
 # VKD3D-Proton - DirectX 12 to Vulkan
