@@ -28,7 +28,7 @@ def calculate_sha256(url: str) -> str:
 def update_config(version: str, checksum: str, output_file: Path) -> bool:
     """Update the Proton-GE configuration file with new version and checksum."""
     try:
-        url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/{version}/{version}.tar.gz"
+        url = f"github:GloriousEggroll/proton-ge-custom/releases/download/{version}/{version}.tar.gz"
         
         config_content = f"""variables:
   proton_ge_version: "{version}"
