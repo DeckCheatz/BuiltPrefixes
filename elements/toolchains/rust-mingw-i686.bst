@@ -176,5 +176,5 @@ public:
 sources:
 # Rust source distribution
 - kind: tar
-  url: tar_https:static.rust-lang.org/dist/rustc-1.92.0-src.tar.xz
-  ref: ebee170bfe4c4dfc59521a101de651e5534f4dae889756a5c97ca9ea40d0c307
+  url: tar_https:static.rust-lang.org/dist/rustc-1.95.0-src.tar.xz
+  ref: 62b67230754da642a264ca0cb9fc08820c54e2ed7b3baba0289876d4cdb48c08
