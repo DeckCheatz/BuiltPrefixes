@@ -27,4 +27,4 @@ sources:
 - kind: git
   url: gitlab:BuildStream/buildstream-plugins-community.git
   track: "master"
-  ref: 2.3.0-0-g203393ec525234c275ceb528f5aa149941f82576
+  ref: 2.3.1-0-gd9b0336d17d33c0ee9ee66953383b312dcfc12c0
