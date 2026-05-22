@@ -41,6 +41,8 @@ build-depends:
 - freedesktop-sdk.bst:components/ninja.bst
 # LLVM for the Rust compiler
 - freedesktop-sdk.bst:components/llvm.bst
+# Git from freedesktop-sdk
+- freedesktop-sdk.bst:components/git-minimal.bst
 # Complete MinGW-w64 toolchain (provides the cross-linker)
 - toolchains/mingw/mingw-w64-i686.bst
 
