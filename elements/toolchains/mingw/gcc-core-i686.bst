@@ -96,7 +96,7 @@ sources:
 - kind: git_repo
   url: gcc_gnu_org:gcc.git
   track: releases/gcc-14
-  ref: releases/gcc-14.3.0-824-gc325ce8038b45095653b0e1c8c859f61f3fc4e9c
+  ref: releases/gcc-14.3.0-844-gcdd9f96efc0b76095b7b844fff391e673c48323d
 
 # GMP - GNU Multiple Precision Arithmetic Library (required by GCC)
 - kind: tar
