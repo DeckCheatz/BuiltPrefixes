@@ -33,6 +33,9 @@ build-depends:
 # Winetricks helper script
 - components/winetricks.bst
 
+# Virtual framebuffer for headless Wine initialisation (DISPLAY=:99)
+- components/xorg-server-xvfb.bst
+
 # trainer-monitor - Win32/Linux watchdog for modding tools.
 - filename: components/trainer-monitor.bst
   config:
@@ -75,6 +78,9 @@ environment:
   PATH: "/usr/bin:/bin:/proton:/proton/files/bin"
   # Temporary directory for Wine operations
   TMPDIR: "/tmp"
+  WINE64: "/proton/files/bin/wine64"
+  WINE32: "/proton/files/bin/wine"
+  WINESERVER: "/proton/files/bin/wineserver"
 
 config:
   build-commands:
@@ -83,23 +89,65 @@ config:
     echo "Setting up Wine environment from Proton-GE..."
     mkdir -pv "%{prefix-root}"
 
-  # Step 2: Initialize Wine prefix with Proton's wineboot
-  # This creates the basic Windows directory structure and registry
+  # Step 2: Start virtual framebuffer so wineboot can launch explorer
+  - |
+    Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp &
+    echo $! > /tmp/xvfb.pid
+    # Wait until Xvfb is accepting connections
+    for i in $(seq 1 20); do
+      xdpyinfo -display :99 >/dev/null 2>&1 && break
+      sleep 0.5
+    done
+
+  # Step 3: Initialize Wine prefix - try WOW64 first, fall back to 32-bit
+  # WOW64 runs 32-bit Windows apps inside a 64-bit Wine process (no 32-bit Linux libs needed).
+  # Wineboot may return non-zero due to headless display-driver warnings even when the prefix
+  # is fully created, so we test for drive_c/windows rather than the exit code.
   - |
     set -x
-    echo "Initializing Wine prefix with wineboot..."
-    $WINE wineboot -i || (export WINE="/proton/files/bin/wine64"; export WINEARCH=win64; rm -rf "%{prefix-root}"; $WINE wineboot -i)
 
-  # Step 3: Install Windows components via winetricks
+    # Attempt WOW64 (wine64 + win64 prefix)
+    WINE="$WINE64" WINEARCH=win64 WINEPREFIX="%{prefix-root}" "$WINE64" wineboot -i 2>&1 || true
+
+    if [ -d "%{prefix-root}/drive_c/windows" ]; then
+      echo "WOW64 mode initialised successfully"
+      printf 'WINE=%s\nWINEARCH=win64\n' "$WINE64" > /tmp/wine-mode
+    else
+      echo "WOW64 prefix creation failed, falling back to 32-bit mode"
+      # Kill wineserver so it releases locks on the prefix before cleanup
+      WINEPREFIX="%{prefix-root}" "$WINESERVER" -k 2>/dev/null || true
+      sleep 1
+      chmod -Rf u+w "%{prefix-root}" 2>/dev/null || true
+      rm -rf "%{prefix-root}"
+      mkdir -pv "%{prefix-root}"
+      WINE="$WINE32" WINEARCH=win32 WINEPREFIX="%{prefix-root}" "$WINE32" wineboot -i 2>&1 || true
+      printf 'WINE=%s\nWINEARCH=win32\n' "$WINE32" > /tmp/wine-mode
+    fi
+
+  # Step 3b: Disable hardware-access Wine services that fail in the build sandbox
+  - |
+    . /tmp/wine-mode
+    export WINE WINEARCH WINEPREFIX="%{prefix-root}"
+    DISPLAY=:99 "$WINE" reg add "HKLM\\SYSTEM\\CurrentControlSet\\Services\\winebth" /v Start /t REG_DWORD /d 4 /f 2>&1 || true
+    DISPLAY=:99 "$WINE" reg add "HKLM\\SYSTEM\\CurrentControlSet\\Services\\wineusb" /v Start /t REG_DWORD /d 4 /f 2>&1 || true
+    WINEPREFIX="%{prefix-root}" /proton/files/bin/wineserver -w 2>/dev/null || true
+
+  # Step 4: Install Windows components via winetricks using the mode chosen above
   # -q flag runs in quiet/unattended mode
   - |
-    echo "Installing dependencies via winetricks..."
-    winetricks -q sdl vkd3d dxvk2030 dotnet48
+    . /tmp/wine-mode
+    export WINE WINEARCH
+    echo "Installing dependencies via winetricks (WINE=$WINE WINEARCH=$WINEARCH)..."
+    winetricks -q vkd3d dxvk2030 dotnet48
 
-  # Step 4: Install trainer-monitor into C:\Windows\system32
+  # Step 5: Install trainer-monitor into C:\Windows\system32
   - |
     echo "Installing trainer-monitor..."
-    install -Dm644 -t "${prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
+    install -Dm644 -t "%{prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
+
+  # Step 6: Stop Xvfb
+  - |
+    kill "$(cat /tmp/xvfb.pid)" 2>/dev/null || true
 
   # No binary stripping for Wine prefix
   strip-commands: []
