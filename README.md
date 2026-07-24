@@ -15,7 +15,9 @@ installed:
 - Installs, offline, via winetricks: **SDL**, **VKD3D**, **DXVK 2.3**, **.NET Framework 4.8**
 - Cross-compiles [`trainer-monitor`](https://github.com/DeckCheatz/trainer-monitor)
   to Windows 32-bit and installs `trainer-monitor.exe` into the prefix
-- Emits the whole prefix as `wine-prefix-<version>.tar.gz`
+- Emits the whole prefix as `wine-prefix-<version>.tar.gz`, alongside a
+  `wine-prefix-metadata.json` recording the source Proton, installed
+  winetricks verb versions, and the building flake's git revision
 
 Everything runs inside the Nix build sandbox: Proton's Wine executes in a nested
 FHS environment (`buildFHSEnv`), and every download (Proton, winetricks packages)
@@ -67,6 +69,12 @@ nix build .#prefix --override-input proton \
 To change the default, edit the `proton` input URL in `flake.nix` and run
 `nix flake lock`.
 
+### Using Just
+
+A `Justfile` wraps the common commands (`just build`, `just build-version
+GE-Proton10-1`, `just matrix ...`, `just releases-list`, `just fmt`, `just
+check`). Run `just` or `just --list` to see all recipes.
+
 ## Flake outputs
 
 | Attribute | Description |
@@ -77,13 +85,14 @@ To change the default, edit the `proton` input URL in `flake.nix` and run
 | `packages.winetricks` | Patched winetricks used by the build |
 | `packages.winetricksCache` | The offline winetricks download cache |
 | `packages.protonFhs` | The FHS environment Proton's Wine runs inside |
-| `devShells.default` | Shell with Nix tooling + Python for the CI scripts |
+| `devShells.default` | Shell with Nix, `nixpkgs-fmt`, `just`, and Python for the CI scripts |
 
 ## Project Structure
 
 ```
 BuiltPrefixes/
 ├── flake.nix                 # Inputs (nixpkgs, proton-ge, trainer-monitor) + packages
+├── Justfile                  # Local wrappers for the Nix/CI commands
 ├── nix/
 │   ├── winetricks.nix        # Patched winetricks (pinned git + patches/)
 │   ├── winetricks-cache.nix  # Offline download cache (fetchurl FODs)
@@ -107,9 +116,33 @@ BuiltPrefixes/
    has always used: `wineboot -i`, then
    `winetricks -q sdl vkd3d dxvk2030 dotnet48`, then installs
    `trainer-monitor.exe`. A headless `Xvfb` provides the display the .NET
-   installer needs. The finished prefix is copied to the output.
-4. `flake.nix` tars that directory reproducibly into
-   `wine-prefix-<version>.tar.gz`.
+   installer needs. The finished prefix is copied to the output, alongside a
+   `wine-prefix-metadata.json` written at eval time (no shell templating), e.g.:
+
+   ```json
+   {
+     "proton": {
+       "version": "GE-Proton9-12",
+       "narHash": "sha256-2/vxX5AT1qQ50jBrQkZIzlmzkOAX+qzINEeD3Lo1f40=",
+       "lastModifiedDate": "20240831222404"
+     },
+     "winetricksVerbs": {
+       "sdl": "1.2.15",
+       "vkd3d": "3.0b",
+       "dxvk2030": "2.3",
+       "dotnet48": "4.8"
+     },
+     "flake": { "rev": "ad73a390c0a607e3065d39eb0d1c6a1bb0280b13-dirty" }
+   }
+   ```
+
+   `proton.narHash` identifies the exact Proton tarball that was fetched
+   (accurate even when `proton` was overridden via `--override-input`, since
+   that never changes the bundled `version` file's own self-reported string).
+   `flake.rev` is `self.rev`, or `self.dirtyRev` (suffixed `-dirty`) for an
+   uncommitted tree.
+4. `flake.nix` tars that directory (including `wine-prefix-metadata.json`)
+   reproducibly into `wine-prefix-<version>.tar.gz`.
 
 ## CI/CD
 

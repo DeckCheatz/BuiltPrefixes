@@ -47,71 +47,88 @@
     };
   };
 
-  outputs = inputs: let
-    inherit (inputs) nixpkgs;
+  outputs = inputs@{ self, ... }:
+    let
+      inherit (inputs) nixpkgs;
 
-    supportedSystems = [ "x86_64-linux" ];
+      supportedSystems = [ "x86_64-linux" ];
 
-    forEachSystem = f:
-      nixpkgs.lib.genAttrs supportedSystems
-        (system: f (import nixpkgs { inherit system; }) system);
+      forEachSystem = f:
+        nixpkgs.lib.genAttrs supportedSystems
+          (system: f (import nixpkgs { inherit system; }) system);
 
-    # Derive a human-readable Proton version from the bundled `version` file
-    # (falling back to "custom" for unusual archives). Used to name the tarball.
-    protonVersion = let
-      lib = nixpkgs.lib;
-      versionFile = "${inputs.proton}/version";
-      raw = if builtins.pathExists versionFile
+      # Derive a human-readable Proton version from the bundled `version` file
+      # (falling back to "custom" for unusual archives). Used to name the tarball.
+      protonVersion =
+        let
+          lib = nixpkgs.lib;
+          versionFile = "${inputs.proton}/version";
+          raw =
+            if builtins.pathExists versionFile
             then builtins.readFile versionFile
             else "";
-      tokens = builtins.filter (s: s != "")
-        (lib.splitString " " (lib.replaceStrings [ "\n" "\t" ] [ " " " " ] raw));
-    in if tokens == [] then "custom" else lib.last tokens;
-  in {
-    packages = forEachSystem (pkgs: system: let
-      winetricks = pkgs.callPackage ./nix/winetricks.nix { };
-      winetricksCache = pkgs.callPackage ./nix/winetricks-cache.nix { };
-      protonFhs = pkgs.callPackage ./nix/proton-fhs.nix { };
+          tokens = builtins.filter (s: s != "")
+            (lib.splitString " " (lib.replaceStrings [ "\n" "\t" ] [ " " " " ] raw));
+        in
+        if tokens == [ ] then "custom" else lib.last tokens;
 
-      trainer-monitor = pkgs.callPackage ./nix/trainer-monitor.nix {
-        src = inputs.trainer-monitor;
-        fenix = inputs.fenix.packages.${system};
-      };
+      # This flake's own git revision, stamped into each prefix's metadata.json.
+      # `self.rev` is only set for a clean tree; `dirtyRev` (suffixed "-dirty")
+      # covers local/uncommitted builds.
+      flakeRev = self.rev or self.dirtyRev or "unknown";
+    in
+    {
+      packages = forEachSystem (pkgs: system:
+        let
+          winetricks = pkgs.callPackage ./nix/winetricks.nix { };
+          winetricksCacheResult = pkgs.callPackage ./nix/winetricks-cache.nix { };
+          protonFhs = pkgs.callPackage ./nix/proton-fhs.nix { };
 
-      wine-prefix = pkgs.callPackage ./nix/wine-prefix.nix {
-        inherit protonFhs winetricks winetricksCache;
-        proton = inputs.proton;
-        trainerExe = "${trainer-monitor}/bin/trainer-monitor.exe";
-      };
+          trainer-monitor = pkgs.callPackage ./nix/trainer-monitor.nix {
+            src = inputs.trainer-monitor;
+            fenix = inputs.fenix.packages.${system};
+          };
 
-      # Package the prefix directory into a reproducible .tgz.
-      prefix = pkgs.runCommand "wine-prefix-${protonVersion}.tar.gz"
-        { nativeBuildInputs = [ pkgs.gzip pkgs.gnutar ]; }
-        ''
-          mkdir -p "$out"
-          tar \
-            --sort=name \
-            --mtime='@0' \
-            --owner=0 --group=0 --numeric-owner \
-            -C ${wine-prefix} \
-            -cf - . \
-          | gzip -n -9 > "$out/wine-prefix-${protonVersion}.tar.gz"
-        '';
-    in {
-      inherit winetricks winetricksCache protonFhs trainer-monitor wine-prefix prefix;
-      default = prefix;
-    });
+          wine-prefix = pkgs.callPackage ./nix/wine-prefix.nix {
+            inherit protonFhs winetricks protonVersion flakeRev;
+            proton = inputs.proton;
+            winetricksCache = winetricksCacheResult.cache;
+            winetricksVersions = winetricksCacheResult.versions;
+            trainerExe = "${trainer-monitor}/bin/trainer-monitor.exe";
+          };
 
-    devShells = forEachSystem (pkgs: _system: {
-      default = pkgs.mkShell {
-        packages = [
-          pkgs.nix
-          pkgs.nixpkgs-fmt
-          (pkgs.python3.withPackages (ps: with ps; [ requests tomlkit ]))
-        ];
-      };
-    });
+          # Package the prefix directory (including its metadata.json) into a
+          # reproducible .tgz.
+          prefix = pkgs.runCommand "wine-prefix-${protonVersion}.tar.gz"
+            { nativeBuildInputs = [ pkgs.gzip pkgs.gnutar ]; }
+            ''
+              mkdir -p "$out"
+              tar \
+                --sort=name \
+                --mtime='@0' \
+                --owner=0 --group=0 --numeric-owner \
+                -C ${wine-prefix} \
+                -cf - . \
+              | gzip -n -9 > "$out/wine-prefix-${protonVersion}.tar.gz"
+            '';
+        in
+        {
+          inherit winetricks protonFhs trainer-monitor wine-prefix prefix;
+          winetricksCache = winetricksCacheResult.cache;
+          default = prefix;
+        });
 
-    formatter = forEachSystem (pkgs: _system: pkgs.nixpkgs-fmt);
-  };
+      devShells = forEachSystem (pkgs: _system: {
+        default = pkgs.mkShell {
+          packages = [
+            pkgs.nix
+            pkgs.nixpkgs-fmt
+            pkgs.just
+            pkgs.python3
+          ];
+        };
+      });
+
+      formatter = forEachSystem (pkgs: _system: pkgs.nixpkgs-fmt);
+    };
 }

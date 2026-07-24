@@ -14,17 +14,28 @@
 # Proton's Wine runs inside `protonFhs`. Everything it needs (Proton, winetricks,
 # the download cache, the .exe) is already in the store, so the derivation itself
 # needs no network. Output ($out) is the finished prefix *directory*.
+#
+# Alongside the prefix, a `wine-prefix-metadata.json` is written identifying:
+#   - the source Proton (its self-reported version, plus the content hash of
+#     the fetched tarball, which stays accurate even when `proton` was
+#     overridden with `--override-input`)
+#   - the exact version of each winetricks verb that was installed
+#   - the git revision of the flake that produced the build
 { lib
 , runCommand
 , writeShellScript
+, writeText
 , makeFontsConf
 , dejavu_fonts
 , liberation_ttf
 , protonFhs
 , proton # Proton-GE root (flake input)
+, protonVersion # human-readable version parsed from proton's bundled `version` file
 , winetricks
 , winetricksCache
+, winetricksVersions # verb -> version, from winetricks-cache.nix
 , trainerExe
+, flakeRev # this flake's git revision (self.rev / self.dirtyRev)
 , winetricksVerbs ? [ "sdl" "vkd3d" "dxvk2030" "dotnet48" ]
 }:
 
@@ -112,6 +123,20 @@ let
 
     "$WINE" wineserver -k || true
   '';
+
+  metadata = {
+    proton = {
+      version = protonVersion;
+      narHash = proton.narHash;
+      lastModifiedDate = proton.lastModifiedDate;
+    };
+    winetricksVerbs = lib.genAttrs winetricksVerbs (verb: winetricksVersions.${verb});
+    flake = {
+      rev = flakeRev;
+    };
+  };
+
+  metadataFile = writeText "wine-prefix-metadata.json" (builtins.toJSON metadata);
 in
 runCommand "wine-prefix"
 {
@@ -127,4 +152,5 @@ runCommand "wine-prefix"
   # Copy the finished prefix out of the (shared) work dir into $out.
   mkdir -p "$out"
   cp -a "$WORK/pfx/." "$out/"
+  install -Dm444 ${metadataFile} "$out/wine-prefix-metadata.json"
 ''
