@@ -48,66 +48,35 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Install BuildStream and dependencies
-        run: |
-          pip install buildstream buildstream-plugins dulwich==0.24.0 requests tomlkit
-          sudo apt update
-          sudo apt install -y bubblewrap lzip
-          bst --version
-
-      - name: Lift AppArmor restrictions for bubblewrap
-        run: |
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-
-      # BuildStream CAS (Content Addressable Storage) cache
-      # Shared across all Proton-GE versions to reuse expensive artifacts like GCC, MinGW
-      # The CAS is content-addressable so artifacts are deduplicated by hash
-      - name: Restore BuildStream cache
-        uses: actions/cache/restore@v5
-        with:
-          path: ~/.cache/buildstream
-          # Key based on toolchain elements only - these are expensive and shared
-          key: buildstream-cas-${{ runner.os }}-${{ hashFiles('elements/toolchains/**/*.bst') }}
-          restore-keys: |
-            buildstream-cas-${{ runner.os }}-
-
-      - name: Update Proton-GE configuration
-        run: |
-          echo "Updating configuration for ${{ inputs.version }}..."
-          ./scripts/update-proton-config.py "${{ inputs.version }}" --calculate-checksum
-
+      # The prefix is built entirely inside the Nix sandbox. The Proton-GE
+      # version is selected by overriding the `proton-ge` flake input; nothing
+      # in the repository needs to be edited per-version.
       - name: Build Wine prefix
+        id: build
         run: |
-          bst --network-retries 10 --on-error quit build deploy/prefix.bst
+          PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${{ inputs.version }}/${{ inputs.version }}.tar.gz"
+          echo "Building prefix for ${{ inputs.version }} from $PROTON_URL"
 
-      - name: Save BuildStream cache
-        uses: actions/cache/save@v5
-        if: always()
-        with:
-          path: ~/.cache/buildstream
-          # Key based on toolchain elements only - these are expensive and shared
-          key: buildstream-cas-${{ runner.os }}-${{ hashFiles('elements/toolchains/**/*.bst') }}
+          nix build .#prefix \
+            --override-input proton "$PROTON_URL" \
+            --print-build-logs \
+            --print-out-paths > out-path.txt
 
-      - name: Checkout build artifact
-        run: |
-          mkdir -p out
-          bst artifact checkout --directory out deploy/prefix.bst
-          echo "Artifact contents:"
-          ls -la out/
+          OUT_PATH="$(cat out-path.txt)"
+          echo "Nix output: $OUT_PATH"
+          echo "out_path=$OUT_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Create tarball
         id: tarball
         run: |
           TARBALL_NAME="wine-prefix-${{ inputs.version }}.tar.gz"
-          echo "Creating $TARBALL_NAME..."
+          echo "Collecting $TARBALL_NAME..."
 
-          tar -czvf "$TARBALL_NAME" -C out .
+          # The Nix build emits a single wine-prefix-<version>.tar.gz in $out.
+          cp "${{ steps.build.outputs.out_path }}"/*.tar.gz "$TARBALL_NAME"
 
           # Calculate SHA256
           SHA256=$(sha256sum "$TARBALL_NAME" | cut -d' ' -f1)
