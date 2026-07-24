@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "fenix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-analyzer-src": "rust-analyzer-src"
+      },
+      "locked": {
+        "lastModified": 1784882000,
+        "narHash": "sha256-uexExdN1itvHYHFek4bpvRqURvxYLKWUetpekP+udbk=",
+        "owner": "nix-community",
+        "repo": "fenix",
+        "rev": "42d2c5f54f90dd11ebd5dc7732f004aa900cfecd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "fenix",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1777425547,
@@ -16,9 +37,59 @@
         "type": "github"
       }
     },
+    "proton": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1725143044,
+        "narHash": "sha256-2/vxX5AT1qQ50jBrQkZIzlmzkOAX+qzINEeD3Lo1f40=",
+        "type": "tarball",
+        "url": "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton9-12/GE-Proton9-12.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton9-12/GE-Proton9-12.tar.gz"
+      }
+    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "fenix": "fenix",
+        "nixpkgs": "nixpkgs",
+        "proton": "proton",
+        "trainer-monitor": "trainer-monitor"
+      }
+    },
+    "rust-analyzer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784667699,
+        "narHash": "sha256-853teJQOgTTKRfNxcIJ53ziJOGNeg3c74PvQl5l61Jc=",
+        "owner": "rust-lang",
+        "repo": "rust-analyzer",
+        "rev": "1174734d9c6453d13d2b5e3d578512c579ca37f1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "ref": "nightly",
+        "repo": "rust-analyzer",
+        "type": "github"
+      }
+    },
+    "trainer-monitor": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773861135,
+        "narHash": "sha256-9SWq7OqkRP8qHmX9AsTVa/1/ygk6ZrUSmr5yMEzsQ8E=",
+        "owner": "DeckCheatz",
+        "repo": "trainer-monitor",
+        "rev": "56dea9a0838a300e9dcc9273df1f4a4ed3cfdf63",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DeckCheatz",
+        "repo": "trainer-monitor",
+        "rev": "56dea9a0838a300e9dcc9273df1f4a4ed3cfdf63",
+        "type": "github"
       }
     }
   },
