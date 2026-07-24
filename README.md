@@ -1,200 +1,125 @@
 # BuiltPrefixes
 
-A BuildStream-based build system for creating Wine/Proton prefixes with cross-compilation support for Windows targets.
+A **Nix** build system for creating pre-configured Wine/Proton prefixes, built
+reproducibly inside the Nix sandbox and packaged as a `.tgz`.
 
 ## Overview
 
-This project builds upon the Freedesktop SDK to:
+This project takes a **Proton runtime** — [Proton-GE](https://github.com/GloriousEggroll/proton-ge-custom),
+[UMU-Proton](https://github.com/Open-Wine-Components/umu-proton),
+[CachyOS Proton](https://github.com/CachyOS/proton-cachyos), or Valve's Proton —
+and produces a ready-to-use Wine prefix with common Windows components already
+installed:
 
-- Create pre-configured Wine prefixes with Proton-GE runtime
-- Build complete MinGW-w64 cross-compilation toolchains for Windows targets
-- Provide Rust cross-compilation support targeting Windows 32-bit (i686-pc-windows-gnu)
-- Install and configure Wine components (winetricks, DirectX libraries, runtimes)
-- Automate builds via GitHub Actions with version matrix generation
+- Initialises the prefix with Proton's bundled Wine (`wineboot`)
+- Installs, offline, via winetricks: **SDL**, **VKD3D**, **DXVK 2.3**, **.NET Framework 4.8**
+- Cross-compiles [`trainer-monitor`](https://github.com/DeckCheatz/trainer-monitor)
+  to Windows 32-bit and installs `trainer-monitor.exe` into the prefix
+- Emits the whole prefix as `wine-prefix-<version>.tar.gz`
+
+Everything runs inside the Nix build sandbox: Proton's Wine executes in a nested
+FHS environment (`buildFHSEnv`), and every download (Proton, winetricks packages)
+is a pinned, hash-checked input, so builds are hermetic and reproducible.
 
 ## Requirements
 
-- BuildStream >= 2.5
-- bubblewrap (for sandboxed builds)
-- Python 3.x
+- Nix with flakes enabled (`experimental-features = nix-command flakes`)
+- Linux with unprivileged user namespaces available (for the nested FHS sandbox)
 
 ## Quick Start
 
 ```bash
-# Build the Wine prefix with default Proton-GE version
-just build
+# Build the prefix with the default Proton (Proton-GE) -> result/wine-prefix-<ver>.tar.gz
+nix build .#prefix
 
-# Build with a specific Proton-GE version
-just build-version GE-Proton9-20
+# Inspect the tarball
+tar tzf result/wine-prefix-*.tar.gz | head
 
-# Extract built artifacts
-just checkout deploy/prefix.bst
+# Use it
+mkdir -p ~/.wine-ge && tar -xzf result/wine-prefix-*.tar.gz -C ~/.wine-ge
 ```
+
+### Selecting the Proton distribution / version
+
+The Proton runtime is **not** stored in a config file — it is the `proton` flake
+input. Override it per build with `--override-input proton <tarball-or-path>`.
+The build auto-detects each distribution's layout (`files/` vs `dist/`, and
+whether a 32-bit `wine` is present), so any Proton bundle works:
+
+```bash
+# Proton-GE (a specific version)
+nix build .#prefix --override-input proton \
+  https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton10-1/GE-Proton10-1.tar.gz
+
+# UMU-Proton
+nix build .#prefix --override-input proton \
+  https://github.com/Open-Wine-Components/umu-proton/releases/download/UMU-Proton-10.0-4/UMU-Proton-10.0-4.tar.gz
+
+# CachyOS Proton
+nix build .#prefix --override-input proton \
+  https://github.com/CachyOS/proton-cachyos/releases/download/cachyos-11.0-20260703-slr/proton-cachyos-11.0-20260703-slr-x86_64.tar.xz
+
+# Valve Proton (no public tarball; point at an extracted Proton directory)
+nix build .#prefix --override-input proton \
+  "path:$HOME/.steam/steam/steamapps/common/Proton 9.0 (Beta)"
+```
+
+To change the default, edit the `proton` input URL in `flake.nix` and run
+`nix flake lock`.
+
+## Flake outputs
+
+| Attribute | Description |
+|-----------|-------------|
+| `packages.prefix` (`default`) | The final `wine-prefix-<version>.tar.gz` |
+| `packages.wine-prefix` | The built prefix as a plain directory (for inspection) |
+| `packages.trainer-monitor` | `trainer-monitor.exe` cross-compiled to `i686-pc-windows-gnu` |
+| `packages.winetricks` | Patched winetricks used by the build |
+| `packages.winetricksCache` | The offline winetricks download cache |
+| `packages.protonFhs` | The FHS environment Proton's Wine runs inside |
+| `devShells.default` | Shell with Nix tooling + Python for the CI scripts |
 
 ## Project Structure
 
 ```
 BuiltPrefixes/
-├── elements/                          # BuildStream element definitions
-│   ├── components/                    # Application components
-│   ├── toolchains/                    # Compiler toolchains
-│   │   └── mingw/                     # MinGW-w64 cross-compiler stack
-│   ├── deploy/                        # Deployment elements
-│   └── plugins/                       # Plugin definitions
-├── include/                           # Shared configuration includes
-│   ├── _private/
-│   │   └── aliases.yml                # URL aliases for sources
-│   └── proton-ge-config.yml           # Proton-GE version configuration
-├── patches/                           # Patch files
-├── scripts/                           # Build automation scripts
-├── .github/workflows/                 # GitHub Actions CI/CD
-├── project.conf                       # Main BuildStream configuration
-├── Justfile                           # Task automation
-└── flake.nix                          # Nix development environment
+├── flake.nix                 # Inputs (nixpkgs, proton-ge, trainer-monitor) + packages
+├── nix/
+│   ├── winetricks.nix        # Patched winetricks (pinned git + patches/)
+│   ├── winetricks-cache.nix  # Offline download cache (fetchurl FODs)
+│   ├── trainer-monitor.nix   # Rust cross-compile -> i686-pc-windows-gnu
+│   ├── proton-fhs.nix        # buildFHSEnv that runs Proton's Wine + Xvfb
+│   └── wine-prefix.nix       # Core sandbox build (wineboot + winetricks + install exe)
+├── patches/winetricks/       # Offline/ownership fixes applied to winetricks
+├── scripts/                  # CI helpers (matrix generation, release metadata)
+├── docs/                     # Published release metadata
+└── .github/workflows/        # CI: build a version, matrix builds, pages
 ```
 
-## Elements
+## How the build works
 
-### Main Build Target
-
-**deploy/prefix.bst** - Creates a complete Wine prefix with Proton-GE runtime and all dependencies.
-
-### Components
-
-| Element | Description |
-|---------|-------------|
-| `components/proton-ge-source.bst` | Downloads Proton-GE release archive |
-| `components/trainer-monitor.bst` | Rust application targeting Windows i686 |
-| `components/winetricks.bst` | Wine tricks helper tool |
-| `components/winetricks-packages.bst` | Windows runtime dependencies (7zip, .NET, DXVK, VKD3D, SDL) |
-
-### Toolchains
-
-#### MinGW-w64 i686 Stack
-
-A complete cross-compilation toolkit for building Windows 32-bit applications on Linux.
-
-| Element | Description |
-|---------|-------------|
-| `toolchains/mingw/binutils-i686.bst` | GNU Binutils for i686-w64-mingw32 |
-| `toolchains/mingw/mingw-w64-headers-i686.bst` | Windows API headers |
-| `toolchains/mingw/gcc-core-i686.bst` | GCC Stage 1 (C only, for bootstrapping) |
-| `toolchains/mingw/mingw-w64-crt-i686.bst` | C Runtime library |
-| `toolchains/mingw/winpthreads-i686.bst` | POSIX threads implementation |
-| `toolchains/mingw/gcc-i686.bst` | Full GCC (C, C++, LTO) |
-| `toolchains/mingw/mingw-w64-i686.bst` | Stack aggregating all MinGW components |
-
-**Build hierarchy:**
-
-```
-mingw-w64-i686.bst (stack)
-├── binutils-i686.bst
-├── mingw-w64-headers-i686.bst
-│   └── binutils-i686.bst
-├── gcc-core-i686.bst (Stage 1)
-│   ├── binutils-i686.bst
-│   └── mingw-w64-headers-i686.bst
-├── mingw-w64-crt-i686.bst
-│   ├── mingw-w64-headers-i686.bst
-│   └── gcc-core-i686.bst
-├── winpthreads-i686.bst
-│   ├── mingw-w64-crt-i686.bst
-│   └── gcc-core-i686.bst
-└── gcc-i686.bst (Full compiler)
-    ├── mingw-w64-crt-i686.bst
-    └── winpthreads-i686.bst
-```
-
-#### Rust Windows i686 Stack
-
-| Element | Description |
-|---------|-------------|
-| `toolchains/rust-mingw-i686.bst` | Rust std library for i686-pc-windows-gnu |
-| `toolchains/rust-windows-i686-stack.bst` | Complete Rust cross-compilation stack |
-
-## Configuration
-
-### Project Options
-
-- `target_arch`: Target architecture (x86_64 or i686)
-
-### Environment Variables
-
-The build environment configures:
-
-- `WINEPREFIX`, `WINE`, `WINEARCH`: Wine configuration
-- `STEAM_COMPAT_*`: Steam Proton compatibility paths
-- `MAXJOBS`: Build parallelization
-
-### Proton-GE Version
-
-Update the Proton-GE version:
-
-```bash
-just update-config GE-Proton9-20
-```
-
-This updates `include/proton-ge-config.yml` with the version and SHA256 checksum.
-
-## Build Commands
-
-| Command | Description |
-|---------|-------------|
-| `just build` | Build with default Proton-GE version |
-| `just build-version VERSION` | Build specific Proton-GE version |
-| `just checkout [element]` | Extract built artifacts |
-| `just track [element]` | Track source updates |
-| `just update-config VERSION` | Update Proton-GE version/hash |
-| `just get-checksum VERSION` | Calculate SHA256 for version |
-| `just generate-matrix START END` | Create GitHub Actions matrix |
-| `just status` | Show project status |
-
-## Cross-Compiling Rust for Windows
-
-To build a Rust application for Windows i686:
-
-1. Add the toolchain stack to your element's `build-depends`:
-
-```yaml
-build-depends:
-- toolchains/rust-windows-i686-stack.bst
-```
-
-2. Configure cargo to target Windows:
-
-```yaml
-variables:
-  cargo-install-local: >-
-    --target=i686-pc-windows-gnu
-
-environment:
-  PATH: "/usr/mingw-w64/i686-w64-mingw32/bin:/usr/bin:/bin"
-```
-
-See `elements/components/trainer-monitor.bst` for a complete example.
+1. `winetricks-cache.nix` fetches the Windows runtime installers (SDL, DXVK,
+   VKD3D, .NET, 7-Zip) as hash-pinned `fetchurl` derivations and lays them out
+   in winetricks' cache layout.
+2. `trainer-monitor.nix` cross-compiles the Rust watchdog to a Windows `.exe`
+   via `pkgsCross.mingw32`.
+3. `wine-prefix.nix` runs, inside `proton-fhs`, the same sequence the project
+   has always used: `wineboot -i`, then
+   `winetricks -q sdl vkd3d dxvk2030 dotnet48`, then installs
+   `trainer-monitor.exe`. A headless `Xvfb` provides the display the .NET
+   installer needs. The finished prefix is copied to the output.
+4. `flake.nix` tars that directory reproducibly into
+   `wine-prefix-<version>.tar.gz`.
 
 ## CI/CD
 
-### GitHub Actions Workflows
+GitHub Actions workflows build prefixes with Nix and publish them as releases:
 
-- **build-prefix.yml**: Multi-version build with matrix generation
-- **build-single.yml**: Single Proton-GE version build
-- **pages.yml**: Publishes release metadata to GitHub Pages
-
-### Build Matrix
-
-Generate a build matrix for multiple Proton-GE versions:
-
-```bash
-just generate-matrix GE-Proton9-1 GE-Proton9-20
-```
-
-## Plugins
-
-The project uses:
-
-- **buildstream-plugins-community**: cargo, cargo2, git_repo sources
-- **buildstream-plugins**: autotools, git, patch sources
+- **build-single.yml** — build one Proton-GE version (manual dispatch)
+- **build-matrix.yml** — build a range of versions in parallel
+- **build-version.yml** — reusable build job (`nix build .#prefix
+  --override-input proton-ge <url>`), release upload, and metadata update
+- **pages.yml** — publishes release metadata to GitHub Pages
 
 ## License
 
