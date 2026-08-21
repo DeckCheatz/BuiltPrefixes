@@ -27,7 +27,7 @@
 #
 # Output: Rustlib at /usr/lib/rustlib/i686-pc-windows-gnu
 #
-# Source: Rust 1.92.0 source distribution
+# Source: Rust 1.95.0 source distribution (matches freedesktop-sdk 25.08.16 rustc)
 #
 kind: manual
 
