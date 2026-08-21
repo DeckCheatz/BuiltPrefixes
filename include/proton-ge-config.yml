@@ -1,4 +1,4 @@
 variables:
-  proton_ge_version: ""
-  proton_ge_hash: ""
-  proton_ge_url: ""
+  proton_ge_version: "GE-Proton10-4"
+  proton_ge_hash: "13cbc2d3c18b3c117d439911db10e5d9d0ffb2f5fd28c27ce0cd9fa5cd4d278a"
+  proton_ge_url: "github:GloriousEggroll/proton-ge-custom/releases/download/GE-Proton10-4/GE-Proton10-4.tar.gz"
