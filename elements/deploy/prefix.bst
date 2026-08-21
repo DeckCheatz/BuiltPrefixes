@@ -90,7 +90,7 @@ config:
     echo "Initializing Wine prefix with wineboot..."
     $WINE wineboot -i || (export WINE="/proton/files/bin/wine64"; export WINEARCH=win64; rm -rf "%{prefix-root}"; $WINE wineboot -i)
 
-  # Step 3: Install Windows components via winetricks
+  # Step 4: Install Windows components via winetricks using the mode chosen above
   # -q flag runs in quiet/unattended mode
   - |
     echo "Installing dependencies via winetricks..."
