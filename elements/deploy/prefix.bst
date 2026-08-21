@@ -53,13 +53,13 @@ build-depends:
 
 (?):
   - target_arch == 'x86_64':
-# i686 cross-compiler for 32-bit Wine components
+# 32-bit glibc (multiarch dirs + ld-linux.so.2 loader) and GCC runtime libs
+# so Proton's 32-bit wine binaries can execute. Both stage only multiarch
+# content, so they do not overlap the x86_64 base system.
       build-depends:
-        (>):
+        (<):
         - freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
-        - freedesktop-sdk.bst:cross-compilers/gcc-i686.bst
-      environment:
-        LD_LIBRARY_PATH: "/lib/sdk/toolchain-i386/i686-unknown-linux-gnu/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/proton/files/lib64:/proton/files/lib/proton/files/lib"
+        - components/i686-wine-libs.bst
   - target_arch == 'i686':
 # Native 32-bit compiler for 32-bit Wine components
       build-depends:
