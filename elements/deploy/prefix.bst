@@ -99,7 +99,7 @@ config:
   # Step 4: Install trainer-monitor into C:\Windows\system32
   - |
     echo "Installing trainer-monitor..."
-    install -Dm644 -t "${prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
+    install -Dm644 -t "%{prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
 
   # No binary stripping for Wine prefix
   strip-commands: []
