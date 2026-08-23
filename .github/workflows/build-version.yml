@@ -61,9 +61,25 @@ jobs:
           bst --version
 
       - name: Lift AppArmor restrictions for bubblewrap
+        # Ubuntu 24.04+ runners restrict unprivileged user namespaces, which
+        # BuildStream's bubblewrap sandbox needs. The sysctls don't exist on
+        # older kernels (or inside unprivileged containers), so tolerate
+        # failures here.
         run: |
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0 || true
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+
+      - name: Verify bubblewrap sandbox works
+        # Fail fast with a clear message if the sandbox is unusable,
+        # instead of failing deep inside a build element.
+        run: |
+          if ! bwrap --ro-bind / / --dev-bind /dev /dev true; then
+            echo "::error::bubblewrap cannot create namespaces."
+            echo "::error::On GitHub runners the AppArmor step above must succeed;"
+            echo "::error::locally (act/docker) run with --privileged."
+            exit 1
+          fi
+          echo "bubblewrap sandbox OK"
 
       # BuildStream CAS (Content Addressable Storage) cache
       # Shared across all Proton-GE versions to reuse expensive artifacts like GCC, MinGW
