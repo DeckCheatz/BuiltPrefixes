@@ -43,13 +43,13 @@ jobs:
       release_url: ${{ steps.release.outputs.url }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -69,7 +69,7 @@ jobs:
       # Shared across all Proton-GE versions to reuse expensive artifacts like GCC, MinGW
       # The CAS is content-addressable so artifacts are deduplicated by hash
       - name: Restore BuildStream cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/buildstream
           # Key based on toolchain elements only - these are expensive and shared
@@ -87,7 +87,7 @@ jobs:
           bst --network-retries 10 --on-error quit build deploy/prefix.bst
 
       - name: Save BuildStream cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         if: always()
         with:
           path: ~/.cache/buildstream
@@ -117,7 +117,7 @@ jobs:
           echo "tarball_sha256=$SHA256" >> $GITHUB_OUTPUT
 
       - name: Upload tarball artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wine-prefix-${{ inputs.version }}
           path: wine-prefix-${{ inputs.version }}.tar.gz
@@ -125,7 +125,7 @@ jobs:
 
       - name: Create GitHub Release
         id: release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: prefix-${{ inputs.version }}
           name: Wine Prefix for ${{ inputs.version }}
@@ -159,7 +159,7 @@ jobs:
           echo "${{ steps.tarball.outputs.tarball_sha256 }}" > release-info/sha256.txt
 
       - name: Upload release info
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-info-${{ inputs.version }}
           path: release-info/
