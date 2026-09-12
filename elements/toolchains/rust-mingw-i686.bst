@@ -171,8 +171,5 @@ public:
         - '%{indep-libdir}/rustlib/%{rust-target}'
         - '%{indep-libdir}/rustlib/%{rust-target}/**'
 
-sources:
 # Rust source distribution
-- kind: tar
-  url: tar_https:static.rust-lang.org/dist/rustc-1.92.0-src.tar.xz
-  ref: ebee170bfe4c4dfc59521a101de651e5534f4dae889756a5c97ca9ea40d0c307
+(@): freedesktop-sdk.bst:elements/include/rust-source.yml
