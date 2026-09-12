@@ -48,7 +48,7 @@ build-depends:
 - freedesktop-sdk.bst:components/tar.bst
 
 # Base runtime
-- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+- freedesktop-sdk.bst:public-stacks/runtime-gnu.bst
 
 (?):
   - target_arch == 'x86_64':

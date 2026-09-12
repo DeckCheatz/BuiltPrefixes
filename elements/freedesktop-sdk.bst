@@ -8,7 +8,7 @@
 #
 # Elements from this junction are referenced as:
 #   freedesktop-sdk.bst:components/gcc.bst
-#   freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+#   freedesktop-sdk.bst:public-stacks/runtime-gnu.bst
 #
 # Documentation: https://gitlab.freedesktop.org/nicofabian/freedesktop-sdk
 #
