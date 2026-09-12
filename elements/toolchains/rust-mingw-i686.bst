@@ -35,7 +35,7 @@ build-depends:
 # Rust compiler from freedesktop-sdk
 - freedesktop-sdk.bst:components/rust.bst
 # Python is required by Rust's x.py build system
-- freedesktop-sdk.bst:components/python3-minimal.bst
+- freedesktop-sdk.bst:components/python3.bst
 # CMake and Ninja for building LLVM components
 - freedesktop-sdk.bst:components/cmake-stage1.bst
 - freedesktop-sdk.bst:components/ninja.bst
