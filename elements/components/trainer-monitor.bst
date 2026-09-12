@@ -25,7 +25,7 @@ build-depends:
 
 depends:
 # Minimal runtime for build environment
-- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+- freedesktop-sdk.bst:public-stacks/runtime-gnu.bst
 
 variables:
   # Configure cargo to cross-compile to Windows 32-bit

@@ -35,9 +35,9 @@ build-depends:
 # Rust compiler from freedesktop-sdk
 - freedesktop-sdk.bst:components/rust.bst
 # Python is required by Rust's x.py build system
-- freedesktop-sdk.bst:components/python3-minimal.bst
+- freedesktop-sdk.bst:components/python3.bst
 # CMake and Ninja for building LLVM components
-- freedesktop-sdk.bst:components/cmake-stage1.bst
+- freedesktop-sdk.bst:components/cmake.bst
 - freedesktop-sdk.bst:components/ninja.bst
 # LLVM for the Rust compiler
 - freedesktop-sdk.bst:components/llvm.bst
@@ -171,8 +171,5 @@ public:
         - '%{indep-libdir}/rustlib/%{rust-target}'
         - '%{indep-libdir}/rustlib/%{rust-target}/**'
 
-sources:
 # Rust source distribution
-- kind: tar
-  url: tar_https:static.rust-lang.org/dist/rustc-1.92.0-src.tar.xz
-  ref: ebee170bfe4c4dfc59521a101de651e5534f4dae889756a5c97ca9ea40d0c307
+(@): freedesktop-sdk.bst:elements/include/rust-source.yml

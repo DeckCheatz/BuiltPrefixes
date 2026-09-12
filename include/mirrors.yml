@@ -1,0 +1,25 @@
+# Local (non-junction) mirror definitions.
+#
+# BuildStream only processes *local* project.conf includes while doing
+# its "first pass" load of junction elements (used to bootstrap plugin
+# origins, e.g. plugins/buildstream-plugins-community.bst). Mirrors
+# pulled in from freedesktop-sdk.bst (a junction) are therefore not yet
+# visible when BuildStream fetches our own junctions, so every alias used
+# by a junction source (elements/freedesktop-sdk.bst, elements/plugins/*)
+# needs a mirror defined here too when the user's buildstream.conf
+# restricts fetching to mirrors only (fetch: source: mirrors).
+#
+# This is a plain (overwriting) "mirrors:" list rather than a (<)/(>)
+# composite, since during the first pass no other file contributes a
+# "mirrors" list for it to combine with. In the second pass, this list
+# is fully overwritten by freedesktop-sdk.bst's own (more complete)
+# mirrors.yml, which is included after this file below.
+mirrors:
+- name: local-bootstrap-mirrors
+  aliases:
+    pypi:
+    - https://gitlab.com/freedesktop-sdk/mirrors/pypi/raw-files/-/raw/master/
+    gitlab:
+    - https://gitlab.com/freedesktop-sdk/mirrors/gitlab/
+    github:
+    - https://gitlab.com/freedesktop-sdk/mirrors/github/
