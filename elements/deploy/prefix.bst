@@ -60,6 +60,7 @@ build-depends:
         (<):
         - freedesktop-sdk.bst:cross-compilers/standard-libs-i686.bst
         - components/i686-wine-libs.bst
+        - components/i686-gnutls-libs.bst
   - target_arch == 'i686':
 # Native 32-bit compiler for 32-bit Wine components
       build-depends:
