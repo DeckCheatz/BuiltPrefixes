@@ -19,12 +19,17 @@
             lzip
             buildbox
             buildstream
+            # Required by BuildStream to sandbox builds
+            bubblewrap
           ] ++ (with pkgs.python3Packages; [
             packaging
             pip
             tomlkit
             requests
             dulwich
+            # Provides the autotools element and git/patch sources (loaded
+            # via `origin: pip` in project.conf)
+            buildstream-plugins
           ]);
         };
       }

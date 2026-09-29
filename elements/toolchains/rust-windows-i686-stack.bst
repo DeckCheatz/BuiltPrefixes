@@ -34,7 +34,7 @@ depends:
 # Rust compiler from freedesktop-sdk
 - freedesktop-sdk.bst:components/rust.bst
 # Minimal runtime for build environment
-- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+- freedesktop-sdk.bst:public-stacks/runtime-gnu.bst
 # Complete MinGW-w64 toolchain (provides cross-linker and runtime)
 - toolchains/mingw/mingw-w64-i686.bst
 # Rust standard library for Windows i686 target

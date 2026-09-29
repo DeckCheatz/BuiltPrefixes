@@ -30,10 +30,10 @@ options:
 environment:
   WINEPREFIX: "%{prefix-root}"
   WINE: "%{proton-root}/files/bin/wine"
-  WINEARCH: win64
+  WINEARCH: win32
   DISPLAY: ":99"
   STEAM_COMPAT_DATA_PATH: "%{prefix-root}"
-  STEAM_COMPAT_CLIENT_INSTALL_PATH: "%{proton-root}"
+  STEAM_COMPAT_CLIENT_INSTALL_PATH: "/tmp/steam-dummy"
   MAXJOBS: "%{max-jobs}"
 ```
 
@@ -84,6 +84,14 @@ Defined in `include/_private/aliases.yml`, source aliases provide:
 
 ## Local Development
 
+### Filesystem Requirements
+
+Build from a checkout on a POSIX-permission filesystem (ext4, btrfs, xfs,
+tmpfs). NTFS/FAT mounts report mode `0777` for every file; BuildStream
+includes the executable bit in the CAS digests of `local` sources, so all
+subproject keys diverge from `cache.freedesktop-sdk.io` and junction
+artifacts miss (`waiting`) instead of pulling.
+
 ### Justfile Commands
 
 The `Justfile` provides task automation:
@@ -124,7 +132,7 @@ nix develop  # Enter development shell
 
 ## GitHub Actions CI/CD
 
-### build-prefix.yml
+### build-matrix.yml
 
 Multi-version build workflow with matrix strategy.
 

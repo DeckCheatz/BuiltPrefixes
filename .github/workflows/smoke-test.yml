@@ -1,0 +1,81 @@
+# Fast smoke test for the BuildStream project.
+#
+# Runs on every push/PR to catch breakage early, without running the
+# multi-hour full prefix build. Verifies that:
+#   - the CI dependency set installs
+#   - the bubblewrap sandbox works (see docs/build-infrastructure.md)
+#   - the element graph resolves
+#   - a real sandboxed build succeeds on a cheap element
+#
+# Full builds are done by build-single.yml / build-matrix.yml.
+
+name: Smoke Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: smoke-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Project loads and sandboxed build works
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      # Pinned Proton-GE version with known SHA256, so no large download
+      # is needed to validate the configuration include.
+      SMOKE_PROTON_VERSION: GE-Proton10-4
+      SMOKE_PROTON_SHA256: 13cbc2d3c18b3c117d439911db10e5d9d0ffb2f5fd28c27ce0cd9fa5cd4d278a
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install BuildStream and dependencies
+        run: |
+          pip install buildstream buildstream-plugins dulwich==0.24.0 requests tomlkit
+          sudo apt update
+          sudo apt install -y bubblewrap lzip
+          bst --version
+
+      - name: Lift AppArmor restrictions for bubblewrap
+        # Ubuntu 24.04+ runners restrict unprivileged user namespaces, which
+        # BuildStream's bubblewrap sandbox needs. The sysctls don't exist on
+        # older kernels (or inside unprivileged containers), so tolerate
+        # failures here.
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0 || true
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+
+      - name: Verify bubblewrap sandbox works
+        # Fail fast with a clear message if the sandbox is unusable,
+        # instead of failing deep inside a build element.
+        run: |
+          if ! bwrap --ro-bind / / --dev-bind /dev /dev true; then
+            echo "::error::bubblewrap cannot create namespaces."
+            echo "::error::On GitHub runners the AppArmor step above must succeed;"
+            echo "::error::locally (act/docker) run with --privileged."
+            exit 1
+          fi
+          echo "bubblewrap sandbox OK"
+
+      - name: Update Proton-GE configuration
+        run: |
+          ./scripts/update-proton-config.py "$SMOKE_PROTON_VERSION" "$SMOKE_PROTON_SHA256"
+
+      - name: Element graph resolves
+        run: bst show deploy/prefix.bst
+
+      - name: Sandboxed build of a cheap element
+        # winetricks.bst exercises fetch -> sandbox -> build -> cache
+        # against the freedesktop-sdk junction without a long compile.
+        run: bst --network-retries 10 build components/winetricks.bst

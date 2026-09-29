@@ -177,7 +177,9 @@ See `elements/components/trainer-monitor.bst` for a complete example.
 
 ### GitHub Actions Workflows
 
-- **build-prefix.yml**: Multi-version build with matrix generation
+- **build-matrix.yml**: Multi-version build with matrix generation
+- **build-version.yml**: Reusable single-version build workflow
+- **smoke-test.yml**: Fast push/PR smoke test (sandbox + element graph + cheap build)
 - **build-single.yml**: Single Proton-GE version build
 - **pages.yml**: Publishes release metadata to GitHub Pages
 

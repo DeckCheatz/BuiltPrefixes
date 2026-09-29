@@ -21,7 +21,7 @@ kind: manual
 
 depends:
 # Runtime dependencies for winetricks script execution
-- freedesktop-sdk.bst:public-stacks/runtime-minimal.bst
+- freedesktop-sdk.bst:public-stacks/runtime-gnu.bst
 
 config:
   # Winetricks is a shell script, no stripping needed

@@ -1,4 +1,4 @@
 variables:
-  proton_ge_version: ""
-  proton_ge_hash: ""
-  proton_ge_url: ""
+  proton_ge_version: "GE-Proton11-6"
+  proton_ge_hash: "659f8d71f2f78659340120b20c1c5a1464aa138939332a1376dea22f6d2dc2e4"
+  proton_ge_url: "github:GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-6/GE-Proton11-6-x86_64.tar.gz"
