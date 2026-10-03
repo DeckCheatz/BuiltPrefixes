@@ -33,10 +33,10 @@ jobs:
       SMOKE_PROTON_SHA256: 13cbc2d3c18b3c117d439911db10e5d9d0ffb2f5fd28c27ce0cd9fa5cd4d278a
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
