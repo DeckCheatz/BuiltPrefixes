@@ -113,7 +113,7 @@ sources:
 - kind: git_repo
   url: gcc_gnu_org:gcc.git
   track: releases/gcc-14
-  ref: releases/gcc-14.4.0-171-g27c024e0140068b4abc78a363bdafc052fb4043a
+  ref: releases/gcc-14.4.0-219-g8f459cebbd1e14905e4925aba42c1ade0c9a2040
 
 # GMP - GNU Multiple Precision Arithmetic Library (required by GCC)
 - kind: tar
