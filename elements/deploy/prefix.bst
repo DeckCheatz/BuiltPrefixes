@@ -38,6 +38,12 @@ build-depends:
   config:
     location: "/tmp/trainer-monitor"
 
+# DWriteCore.dll - avoids a Wine dwrite.dll crash in Chromium-based
+# renderers (e.g. WeMod's in-app Map). See components/dwritecore.bst.
+- filename: components/dwritecore.bst
+  config:
+    location: "/tmp/dwritecore"
+
 # Utilities required by winetricks and prefix setup
 - freedesktop-sdk.bst:components/curl.bst
 - freedesktop-sdk.bst:components/freetype.bst
@@ -100,6 +106,12 @@ config:
   - |
     echo "Installing trainer-monitor..."
     install -Dm644 -t "%{prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
+
+  # Step 5: Install DWriteCore.dll into system32 so Chromium-based apps
+  # pick it up instead of Wine's dwrite.dll
+  - |
+    echo "Installing DWriteCore.dll..."
+    install -Dm644 -t "%{prefix-root}/drive_c/windows/system32" /tmp/dwritecore/DWriteCore.dll
 
   # No binary stripping for Wine prefix
   strip-commands: []
