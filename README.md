@@ -64,6 +64,7 @@ BuiltPrefixes/
 | Element | Description |
 |---------|-------------|
 | `components/proton-ge-source.bst` | Downloads Proton-GE release archive |
+| `components/dwritecore.bst` | Microsoft's DWriteCore.dll, fixes a Wine dwrite.dll renderer crash |
 | `components/trainer-monitor.bst` | Rust application targeting Windows i686 |
 | `components/winetricks.bst` | Wine tricks helper tool |
 | `components/winetricks-packages.bst` | Windows runtime dependencies (7zip, .NET, DXVK, VKD3D, SDL) |
