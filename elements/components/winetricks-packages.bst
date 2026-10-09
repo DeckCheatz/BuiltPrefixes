@@ -9,7 +9,7 @@
 #   - .NET Framework 4.8: Current .NET Framework runtime
 #   - DXVK 2.3: DirectX 9/10/11 to Vulkan translation layer
 #   - SDL 1.2.15: Simple DirectMedia Layer for legacy games
-#   - VKD3D-Proton 3.0b: DirectX 12 to Vulkan translation layer
+#   - VKD3D-Proton 3.0.1: DirectX 12 to Vulkan translation layer
 #
 # Files are installed to directories matching winetricks cache structure.
 # Mount this at /tmp/.cache/winetricks in your build.
@@ -25,7 +25,7 @@ config:
 
 variables:
   # VKD3D-Proton version - update here to change version globally
-  vkd3d-proton-version: "3.0b"
+  vkd3d-proton-version: "3.0.1"
 
 sources:
 # 7-Zip - archive utility
@@ -62,4 +62,4 @@ sources:
 - kind: remote
   url: "github:HansKristian-Work/vkd3d-proton/releases/download/v%{vkd3d-proton-version}/vkd3d-proton-%{vkd3d-proton-version}.tar.zst"
   directory: "vkd3d"
-  ref: "a21f5e511063b7fe80123910f1b54f75541f2edfef7106c461293f08982e9ad2"
+  ref: "3cf2315522af5e43605ef6d3c41dad91387040bf97199934f3f7ab76caaa2f0c"
