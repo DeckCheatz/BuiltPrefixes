@@ -15,22 +15,25 @@
       pkgs: {
         default = pkgs.mkShell {
           LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib/";
-          nativeBuildInputs = with pkgs; [
-            lzip
-            buildbox
-            buildstream
-            # Required by BuildStream to sandbox builds
-            bubblewrap
-          ] ++ (with pkgs.python3Packages; [
-            packaging
-            pip
-            tomlkit
-            requests
-            dulwich
-            # Provides the autotools element and git/patch sources (loaded
-            # via `origin: pip` in project.conf)
-            buildstream-plugins
-          ]);
+          nativeBuildInputs = with pkgs;
+            [
+              lzip
+              buildbox
+              buildstream
+              # Required by BuildStream to sandbox builds
+              bubblewrap
+            ]
+            ++ (with pkgs.python3Packages; [
+              dulwich
+              packaging
+              pip
+              requests
+              tomlkit
+              # Provides the autotools element and git/patch sources (loaded
+              # via `origin: pip` in project.conf)
+              buildstream-plugins
+              buildstream-plugins-community
+            ]);
         };
       }
     );
