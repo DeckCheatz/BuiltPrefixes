@@ -38,6 +38,12 @@ build-depends:
   config:
     location: "/tmp/trainer-monitor"
 
+# DWriteCore.dll - avoids a Wine dwrite.dll crash in Chromium-based
+# renderers (e.g. WeMod's in-app Map). See components/dwritecore.bst.
+- filename: components/dwritecore.bst
+  config:
+    location: "/tmp/dwritecore"
+
 # Utilities required by winetricks and prefix setup
 - freedesktop-sdk.bst:components/curl.bst
 - freedesktop-sdk.bst:components/freetype.bst
@@ -90,6 +96,14 @@ config:
     echo "Initializing Wine prefix with wineboot..."
     $WINE wineboot -i || (export WINE="/proton/files/bin/wine64"; export WINEARCH=win64; rm -rf "%{prefix-root}"; $WINE wineboot -i)
 
+  # Step 3: wine-mono (bundled with GE-Proton) registers a .NET 4.7
+  # placeholder in fresh 64-bit prefixes. The real .NET installers then
+  # bail out with "Same or higher version already installed" without
+  # installing anything, so clear the seeded v4 key first.
+  - |
+    echo "Clearing wine-mono seeded .NET Framework 4 registry keys..."
+    $WINE reg delete "HKLM\Software\Microsoft\NET Framework Setup\NDP\v4" /f || true
+
   # Step 4: Install Windows components via winetricks using the mode chosen above
   # -q flag runs in quiet/unattended mode
   - |
@@ -100,6 +114,12 @@ config:
   - |
     echo "Installing trainer-monitor..."
     install -Dm644 -t "%{prefix-root}/drive_c/windows" /tmp/trainer-monitor/usr/bin/trainer-monitor.exe
+
+  # Step 5: Install DWriteCore.dll into system32 so Chromium-based apps
+  # pick it up instead of Wine's dwrite.dll
+  - |
+    echo "Installing DWriteCore.dll..."
+    install -Dm644 -t "%{prefix-root}/drive_c/windows/system32" /tmp/dwritecore/DWriteCore.dll
 
   # No binary stripping for Wine prefix
   strip-commands: []

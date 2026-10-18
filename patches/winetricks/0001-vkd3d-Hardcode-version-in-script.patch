@@ -23,7 +23,7 @@ index 9b7773a..7116cb7
  {
      # https://github.com/HansKristian-Work/vkd3d-proton
 -    _W_vkd3d_proton_version="$(w_get_github_latest_release HansKristian-Work vkd3d-proton)"
-+    _W_vkd3d_proton_version="v3.0b"
++    _W_vkd3d_proton_version="v3.0.1"
      _W_vkd3d_proton_version="${_W_vkd3d_proton_version#v}"
      w_linkcheck_ignore=1 w_download "https://github.com/HansKristian-Work/vkd3d-proton/releases/download/v${_W_vkd3d_proton_version}/vkd3d-proton-${_W_vkd3d_proton_version}.tar.zst"
      helper_vkd3d_proton "vkd3d-proton-${_W_vkd3d_proton_version}.tar.zst"
