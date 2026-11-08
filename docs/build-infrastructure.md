@@ -81,6 +81,7 @@ Defined in `include/_private/aliases.yml`, source aliases provide:
 | `freedesktop_gitlab:` | `freedesktop_gitlab:mesa/mesa.git` | Freedesktop GitLab |
 | `tar_https:` | `tar_https:example.com/file.tar.gz` | HTTPS downloads |
 | `crates:` | `crates:crate-name/version/download` | Rust crates.io |
+| `nuget:` | `nuget:package.id/version/package.id.version.nupkg` | NuGet.org flat container |
 
 ## Local Development
 
